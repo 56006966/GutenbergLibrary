@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_library">
+
+    <fragment
+        android:id="@+id/nav_library"
+        android:name="com.example.projectgutenberg.ui.LibraryFragment"
+        android:label="Library" >
+    <action
+            android:id="@+id/action_libraryFragment_to_bookWebViewFragment"
+            app:destination="@id/bookWebViewFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right">
+            <argument
+                android:name="bookId"
+                app:argType="integer" />
+            <argument
+                android:name="bookTitle"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/bookWebViewFragment"
+        android:name="com.example.projectgutenberg.ui.BookWebViewFragment"
+        android:label="Book" >
+        <argument
+            android:name="bookId"
+            app:argType="integer" />
+        <argument
+            android:name="bookTitle"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/bookReaderFragment"
+        android:name="com.example.projectgutenberg.ui.BookReaderFragment"
+        android:label="Book Details" >
+        <argument
+            android:name="bookId"
+            app:argType="integer" />
+        <argument
+            android:name="bookTitle"
+            app:argType="string" />
+        <argument
+            android:name="bookUrl"
+            app:argType="string" />
+    </fragment>
+
+
+</navigation>

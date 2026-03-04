@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">ProjectGutenberg</string>
+    <string name="book_cover">Book Cover Image</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+
+    <string name="menu_transform">Transform</string>
+    <string name="menu_reflow">Reflow</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_settings">Settings</string>
+    <string name="failed_to_load_book">Failed to load book: %1$s</string>
+    <string name="fab_content_description">Represents a view to invoke an action</string>
+</resources>
