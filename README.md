@@ -2,14 +2,14 @@
 
 | Part | Table of Contents |
 | -------- | ------- |
-| I. | [Preliminary Design Review (PDR)](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#i-preliminary-design-review) |
-| II. | [Final Design Review (FDR) - DRAFT](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#ii-final-design-review-fdr---draft) |
-| III. | [Wireframe solution architecture diagrams - DRAFT](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#iii-wireframe-solution-architecture-diagrams---draft) |
-| IV. | [User Stories](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#iv-user-stories) |
-| V. | [Initial Use Cases](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#v-initial-use-cases) |
-| VI. | [Use Case Diagrams](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#vi-use-case-diagrams) |
-| VII. | [Software Requirements Table](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#vii-software-requirements-table) |
-| VIII. | [ERD and UML Class Diagrams](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/README.md#viii-erd-and-uml-class-diagrams) |
+| I. | [Preliminary Design Review (PDR)](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#i-preliminary-design-review) |
+| II. | [Final Design Review (FDR) - DRAFT](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#ii-final-design-review-fdr---draft) |
+| III. | [Wireframe solution architecture diagrams - DRAFT](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#iii-wireframe-solution-architecture-diagrams---draft) |
+| IV. | [User Stories](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#iv-user-stories) |
+| V. | [Initial Use Cases](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#v-initial-use-cases) |
+| VI. | [Use Case Diagrams](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#vi-use-case-diagrams) |
+| VII. | [Software Requirements Table](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#vii-software-requirements-table) |
+| VIII. | [ERD and UML Class Diagrams](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#viii-erd-and-uml-class-diagrams) |
 
 
 
@@ -95,12 +95,12 @@ Last Steps (OPTIONAL):
 ## III. Wireframe solution architecture diagrams - DRAFT
 ----------------------------------------------------
 
-![Wireframe 1](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/wireframe1.drawio.png "Wireframe Diagram 1")
-![Wireframe 2](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/wireframe2.drawio.png "Wireframe Diagram 2")
-![Wireframe 3](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/wireframe3.drawio.png "Wireframe Diagram 3")
-![Wireframe 4](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/wireframe4.drawio.png "Wireframe Diagram 4")
-![Wireframe 5](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/usecasediagram1.png "Use Case Diagram 1")
-![Wireframe 6](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/usecasediagram2.png "Use Case Diagram 2")
+![Wireframe 1](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe1.drawio.png "Wireframe Diagram 1")
+![Wireframe 2](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe2.drawio.png "Wireframe Diagram 2")
+![Wireframe 3](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe3.drawio.png "Wireframe Diagram 3")
+![Wireframe 4](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe4.drawio.png "Wireframe Diagram 4")
+![Wireframe 5](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/usecasediagram1.png "Use Case Diagram 1")
+![Wireframe 6](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/usecasediagram2.png "Use Case Diagram 2")
 
 
 
@@ -167,7 +167,7 @@ Last Steps (OPTIONAL):
 ## VI. Use Case Diagrams
 --------------------
 
-![Read or Download Book Use Case Diagram](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/UseCaseDiagram.drawio.png "Read or Download Book Use Case Diagram")
+![Read or Download Book Use Case Diagram](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/UseCaseDiagram.drawio.png "Read or Download Book Use Case Diagram")
 
 
 
@@ -187,5 +187,5 @@ Last Steps (OPTIONAL):
 
 ## VIII. ERD and UML Class Diagrams
 --------------------
-![ERD](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/Erd.png "ERD")
-![UML Class Diagram](https://github.com/56006966/ProjectGutenbergLibrary/blob/main/Uml.png "UML Diagram")
+![ERD](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/Erd.png "ERD Diagram")
+![UML Class Diagram](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/Uml.png "UML Diagram")
