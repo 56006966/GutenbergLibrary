@@ -2,14 +2,14 @@
 
 | Part | Table of Contents |
 | -------- | ------- |
-| I. | [Preliminary Design Review (PDR)](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#i-preliminary-design-review) |
-| II. | [Final Design Review (FDR) - DRAFT](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#ii-final-design-review-fdr---draft) |
-| III. | [Wireframe solution architecture diagrams - DRAFT](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#iii-wireframe-solution-architecture-diagrams---draft) |
-| IV. | [User Stories](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#iv-user-stories) |
-| V. | [Initial Use Cases](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#v-initial-use-cases) |
-| VI. | [Use Case Diagrams](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#vi-use-case-diagrams) |
-| VII. | [Software Requirements Table](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#vii-software-requirements-table) |
-| VIII. | [ERD and UML Class Diagrams](https://github.com/56006966/GutenbergLibrary/blob/main/README.md#viii-erd-and-uml-class-diagrams) |
+| I. | [Preliminary Design Review (PDR)](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#i-preliminary-design-review) |
+| II. | [Final Design Review (FDR) - DRAFT](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#ii-final-design-review-fdr---draft) |
+| III. | [Wireframe solution architecture diagrams - DRAFT](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#iii-wireframe-solution-architecture-diagrams---draft) |
+| IV. | [User Stories](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#iv-user-stories) |
+| V. | [Initial Use Cases](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#v-initial-use-cases) |
+| VI. | [Use Case Diagrams](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#vi-use-case-diagrams) |
+| VII. | [Software Requirements Table](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#vii-software-requirements-table) |
+| VIII. | [ERD and UML Class Diagrams](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#viii-erd-and-uml-class-diagrams) |
 
 
 
@@ -25,7 +25,7 @@ In this paper, I will be specifying the key parts that I am proposing for my pro
 3.The app will have multiple views for different devices including computers, tablets, and phones. I'd also like to incorporate accessibility features so that text size can change and read aloud the text, and at a minimum include a dark mode.
 4. When you first launch the app, it will reflect the website homepage where the Newest Releases will always appear on the top shelf.
 4.5 The second shelf will have the Most Popular books. The books lined up on shelves that will scroll horizontally. From there you can filter the shelves by genre or search for a book by name or author.
-5. I would also like to have a floating navigation bar that, when clicked on, displays the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs.
+5. I would also like to have a floating navigation bar that, when clicked on, displays the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs.
 6. The About section of the navigation menu has a sub menu with: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate. Donate and PayPal buttons will launch a browser to these designated websites.
 
 
@@ -45,7 +45,7 @@ While researching using Android Studio for this project, I found some important 
 
 With this information, I have been trying to figure out how to use the XML/RDF format instead of the "Read Now" HTML format I was originally planning on using. I think the easiest way is to use the API site Guntendex to try and get this metadata.
 
-Right now, my code is using a WebViewFormat to display certain pages of the site, which feels like cheating for certain pages such as the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs, and for the provideded download options for a book.
+Right now, my code is using a WebViewFormat to display certain pages of the site, which feels like cheating for certain pages such as the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs, and for the provideded download options for a book.
 
 I will have a WebView for the About sub menu pages of the navigation menu: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate. 
 
@@ -70,7 +70,7 @@ Next Steps (MUST DO):
    - Recent Releases
    - Most Popular
    - My Library (locally saved books) 
-4. Create a floating navigation menu that, when clicked on, displays the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs.
+4. Create a floating navigation menu that, when clicked on, displays the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs.
    - The About section of the navigation menu has a sub menu with: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate.
    - Donate and PayPal buttons will launch a browser to these designated websites.
    - There will be a Quick Search bar at the top of the submenu and the Search Options page will give more advanced filtering options
@@ -95,12 +95,12 @@ Last Steps (OPTIONAL):
 ## III. Wireframe solution architecture diagrams - DRAFT
 ----------------------------------------------------
 
-![Wireframe 1](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe1.drawio.png "Wireframe Diagram 1")
-![Wireframe 2](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe2.drawio.png "Wireframe Diagram 2")
-![Wireframe 3](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe3.drawio.png "Wireframe Diagram 3")
-![Wireframe 4](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/wireframe4.drawio.png "Wireframe Diagram 4")
-![Wireframe 5](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/usecasediagram1.png "Use Case Diagram 1")
-![Wireframe 6](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/usecasediagram2.png "Use Case Diagram 2")
+![Wireframe 1](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/wireframe1.drawio.png "Wireframe Diagram 1")
+![Wireframe 2](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/wireframe2.drawio.png "Wireframe Diagram 2")
+![Wireframe 3](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/wireframe3.drawio.png "Wireframe Diagram 3")
+![Wireframe 4](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/wireframe4.drawio.png "Wireframe Diagram 4")
+![Wireframe 5](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/usecasediagram1.png "Use Case Diagram 1")
+![Wireframe 6](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/usecasediagram2.png "Use Case Diagram 2")
 
 
 
@@ -108,7 +108,7 @@ Last Steps (OPTIONAL):
 ## IV. User Stories
 -----------------
 
-1. As a Developer, I want/need a floating navigation bar, so that when clicked on, it displays the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs   
+1. As a Developer, I want/need a floating navigation bar, so that when clicked on, it displays the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs   
 
 2. As a Customer, I want/need dark mode and text scalability, so that it incorporates accessibility features so that text size can change, be read aloud, and at a minimum include a dark mode.               
 
@@ -128,9 +128,9 @@ Last Steps (OPTIONAL):
 |  1. Brief description (or title): |  Floating navigation bar |
 | -------- | ------- |
 | The [relevant] system: | Floating navigation bar menu |
-| The actor(s) including those initiating or responding to events: | When clicked on, it displays the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs |
+| The actor(s) including those initiating or responding to events: | When clicked on, it displays the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs |
 | Scenario usually will include the pre-existing conditions and (all) relevant action sequences: | The About section of the navigation menu has a sub menu with: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate. |
-| Expected result: | A fully functional floating navigation bar that when clicked on, it displays the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs. |
+| Expected result: | A fully functional floating navigation bar that when clicked on, it displays the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs. |
 
 | 2. Brief description (or title): | Script |
 | -------- | ------- |
@@ -167,7 +167,7 @@ Last Steps (OPTIONAL):
 ## VI. Use Case Diagrams
 --------------------
 
-![Read or Download Book Use Case Diagram](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/UseCaseDiagram.drawio.png "Read or Download Book Use Case Diagram")
+![Read or Download Book Use Case Diagram](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/UseCaseDiagram.drawio.png "Read or Download Book Use Case Diagram")
 
 
 
@@ -177,7 +177,7 @@ Last Steps (OPTIONAL):
 
 | ID | Software  Requirement |
 | -------- | ------- |
-| 1 | The software shall have a floating navigation bar menu that can be clicked on to display the About, Frequently Downloaded, Main Categories, Reading Lists, and Search Options tabs |
+| 1 | The software shall have a floating navigation bar menu that can be clicked on to display the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs |
 | 2 | The About section of the navigation menu shall have a sub menu with: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate |
 | 3 | The software shall use a script that reads the Project Gutenberg website and mirrors back the books in the application. The book will be downloaded from the website and saved locally on the device |
 | 4 | There shall be Advanced Search filtering for fields such as Author, Title, Subject, Subject Areas, Language, Datatype, and Filetype |
@@ -187,5 +187,5 @@ Last Steps (OPTIONAL):
 
 ## VIII. ERD and UML Class Diagrams
 --------------------
-![ERD](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/Erd.png "ERD Diagram")
-![UML Class Diagram](https://github.com/56006966/GutenbergLibrary/blob/main/diagrams/Uml.png "UML Diagram")
+![ERD](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/Erd.png "ERD Diagram")
+![UML Class Diagram](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/Uml.png "UML Diagram")
