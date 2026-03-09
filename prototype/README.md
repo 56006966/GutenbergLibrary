@@ -5,6 +5,10 @@
 | I. | [Project Gutenberg Website](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#project-gutenberg-website) |
 | II. | [Gutendex API](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutendex-api) |
 | III. | [Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutenberg-library-app) |
+| IV. | [Next Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#next-steps-must-do) |
+| V. | [Optional](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#last-steps-optional) |
+
+
 
 ## Project Gutenberg Website
 ![Gutenberg's Most Popular](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergMostPopular.png "Gutenberg's Most Popular")
@@ -54,6 +58,7 @@ So I'm hoping to incorporate these excellent suggestions and create a "Shelf" da
      - scroll bar (ladder)
      - loading screens
      - carousel book spinner
+  
 ### Last Steps (OPTIONAL):
 7. Accessibility features:
      - text scalability
