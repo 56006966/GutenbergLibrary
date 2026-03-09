@@ -34,7 +34,6 @@ So I'm hoping to incorporate these excellent suggestions and create a "Shelf" da
 
 ![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary1.png "Gutenberg Library App")
 ![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary2.png "Gutenberg Library App")
-![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary3.png "Gutenberg Library App")
 
 ### Next Steps (MUST DO):
 1. Download the book and save locally in a database on the device
@@ -43,6 +42,7 @@ So I'm hoping to incorporate these excellent suggestions and create a "Shelf" da
 2. Display the text file
    - Present the book in e-reader format with multiple views
      - The book is currently bulk-loading one single file, text display isn't uniform
+![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary3.png "Gutenberg Library App")
 3. The home screen will show three "Shelves" that reflect the website homepage:
    - Recent Releases
    - Most Popular
