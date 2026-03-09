@@ -4,7 +4,7 @@
 | -------- | ------- |
 | I. | [Project Gutenberg Website](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#project-gutenberg-website) |
 | II. | [Gutendex API](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutendex-api) |
-| III. | [Guteberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutenberg-library-app) |
+| III. | [Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutenberg-library-app) |
 
 
 
