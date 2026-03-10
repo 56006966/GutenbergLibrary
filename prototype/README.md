@@ -13,7 +13,7 @@
 ## Project Gutenberg Website
 ![Gutenberg's Most Popular](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergMostPopular.png "Gutenberg's Most Popular")
 ![Frankenstein Text Options](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/FrankensteinOptions.png "Frankenstein Text Options")
-![Frankenstein Read Now (HTML)](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/FrankensteinText.png "Frankenstein Read Now (HTML)")
+
 
 
 
@@ -24,7 +24,11 @@
 
 ## Gutenberg Library App
 
-I have been trying to figure out how to use the XML/RDF format instead of the "Read Now" HTML format I was originally planning on using. I think the easiest way is to use the API site Guntendex to try and get this metadata. Right now, my code is using a WebViewFormat to display certain pages of the site, which feels like cheating for certain pages such as the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs, and for the provideded download options for a book. I will have a WebView for the About sub menu pages of the navigation menu: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate. 
+I have been trying to figure out how to use the XML/RDF format instead of the "Read Now" HTML format I was originally planning on using.
+
+![Frankenstein Read Now (HTML)](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/FrankensteinText.png "Frankenstein Read Now (HTML)")
+
+I think the easiest way is to use the API site Guntendex to try and get this metadata. Right now, my code is using a WebViewFormat to display certain pages of the site, which feels like cheating for certain pages such as the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs, and for the provideded download options for a book. I will have a WebView for the About sub menu pages of the navigation menu: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate. 
 
 I am still troubleshooting the [API](https://gutendex.com/) configurment to display the books. Right now, I am successfully displaying book text but cannot get the actual book text downloaded.
 
