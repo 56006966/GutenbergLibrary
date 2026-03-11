@@ -81,7 +81,8 @@ I am still troubleshooting the [API](https://gutendex.com/) configurment to disp
 | 2.1 | The sub menu will have: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate |
 | 3. | The software shall use a script that reads the Project Gutenberg website and mirrors back the books in the application |
 | 3.1 | The book will be downloaded from the website and saved locally on the device |
-| 4. | There shall be Advanced Search filtering for fields such as Author, Title, Subject, Subject Areas, Language, Datatype, and Filetype |
+| 4. | There shall be Advanced Search filtering|
+| 4.1 | Advanced Search fields such as Author, Title, Subject, Subject Areas, Language, Datatype, and Filetype |
 | 5. | The app shall reflect the website homepage where the Newest Releases will always appear on the top shelf. |
 | 5.1 | The second shelf will have the Most Popular books |
 | 5.2 | The books are lined up on shelves that will scroll horizontally |
