@@ -10,7 +10,6 @@
 | IV.II | [Last Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#last-steps-optional) |
 
 
-
 ## Project Gutenberg Website
 ![Gutenberg's Most Popular](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergMostPopular.png "Gutenberg's Most Popular")
 ![Frankenstein Text Options](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/FrankensteinOptions.png "Frankenstein Text Options")
@@ -21,23 +20,17 @@
 
 
 ## Gutenberg Library App
-
 I have been trying to figure out how to use the XML/RDF format instead of the "Read Now" HTML format I was originally planning on using.
-
 ![Frankenstein Read Now (HTML)](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/FrankensteinText.png "Frankenstein Read Now (HTML)")
-
 I think the easiest way is to use the API site Guntendex to try and get this metadata. Right now, my code is using a WebViewFormat to display certain pages of the site, which feels like cheating for certain pages such as the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs, and for the provideded download options for a book. I will have a WebView for the About sub menu pages of the navigation menu: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate. 
-
 I got really good feedback and resources to try incorporating Tailwind/React animations for the book opening and page turning animations. I also got good feedback to try adding a "My Library" database to sort Favorites and Downloads, and I think that incorporating this with update and delete functionality will represent a functional local database. I also got feedback to try using MongoDB, SQLite or another NoSQL local database with Room Persistance.
-
 So I'm hoping to incorporate these excellent suggestions and create a "Shelf" database that allows you to view your Downloaded and Favorited books by definining a schema and contract, creating a database using SQL helper, adding, deleting and reading data from the database while simultaenously being able to update the database with a return value of update(). After I debug the database (SQLite3 shell tool is a potential option). This way the database using Room in the app to include dependencies to the build.gradle.kts with KSP or annotationProcessor, but NOT BOTH.
-
 I am still troubleshooting the [API](https://gutendex.com/) configurment to display the books. Right now, I am successfully displaying book text but cannot get the actual book text downloaded.
 ![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary1.png "Gutenberg Library App")
 ![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary2.png "Gutenberg Library App")
 
 
-### Software Requirements Table
+## Software Requirements Table
 --------------------
 
 | ID | Software  Requirement |
