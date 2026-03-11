@@ -43,7 +43,7 @@ I am still troubleshooting the [API](https://gutendex.com/) configurment to disp
 | ID | Software  Requirement |
 | -------- | ------- |
 | 1. | The software shall have a floating navigation bar menu |
-| 1.1 | The floating navigation bar menu can be clicked on to display the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs |
+| 1.1 | The floating navigation bar menu includes the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs |
 | 2. | The About section of the navigation menu shall have a sub menu |
 | 2.1 | The sub menu will have: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate |
 | 3. | The software shall use a script that reads the Project Gutenberg website and mirrors back the books in the application |
