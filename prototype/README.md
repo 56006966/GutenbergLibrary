@@ -9,17 +9,13 @@
 | V. | [Last Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#last-steps-optional) |
 
 
-
 ## Project Gutenberg Website
 ![Gutenberg's Most Popular](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergMostPopular.png "Gutenberg's Most Popular")
 ![Frankenstein Text Options](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/FrankensteinOptions.png "Frankenstein Text Options")
 
 
-
-
 ## Gutendex API
 ![Gutendex API](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutendexApi.png "Gutendex API")
-
 
 
 ## Gutenberg Library App
@@ -37,6 +33,7 @@ So I'm hoping to incorporate these excellent suggestions and create a "Shelf" da
 I am still troubleshooting the [API](https://gutendex.com/) configurment to display the books. Right now, I am successfully displaying book text but cannot get the actual book text downloaded.
 ![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary1.png "Gutenberg Library App")
 ![Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/GutenbergLibrary2.png "Gutenberg Library App")
+
 
 ### Next Steps (MUST DO):
 1. Download the book and save locally in a database on the device
@@ -61,6 +58,7 @@ I am still troubleshooting the [API](https://gutendex.com/) configurment to disp
      - scroll bar (ladder)
      - loading screens
      - carousel book spinner
+
   
 ### Last Steps (OPTIONAL):
 7. Accessibility features:
@@ -71,4 +69,17 @@ I am still troubleshooting the [API](https://gutendex.com/) configurment to disp
 8. Themes
      - acheivements with rewardable icons, covers, colors, etc.
   
+### Software Requirements Table
+--------------------
 
+| ID | Software  Requirement |
+| -------- | ------- |
+| 1. | The software shall have a floating navigation bar menu |
+| 1.1 | The floating navigation bar menu can be clicked on to display the About, Frequently Downloaded, master Categories, Reading Lists, and Search Options tabs |
+| 2. | The About section of the navigation menu shall have a sub menu with: Contact Us, History & Philosophy, Kindles & eReaders, Help Pages, Offline Catalogs, and Donate |
+| 3. | The software shall use a script that reads the Project Gutenberg website and mirrors back the books in the application |
+| 3.1 | The book will be downloaded from the website and saved locally on the device |
+| 4. | There shall be Advanced Search filtering for fields such as Author, Title, Subject, Subject Areas, Language, Datatype, and Filetype |
+| 5. | The app shall reflect the website homepage where the Newest Releases will always appear on the top shelf. |
+| 5.1 | The second shelf will have the Most Popular books. The books are lined up on shelves that will scroll horizontally |
+| 5.2 | The books are lined up on shelves that will scroll horizontally |
