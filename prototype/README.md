@@ -7,6 +7,7 @@
 | III. | [Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutenberg-library-app) |
 | IV. | [Next Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#next-steps-must-do) |
 | V. | [Last Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#last-steps-optional) |
+| VI. | [Software Requirements](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#software-requirements-table) |
 
 
 ## Project Gutenberg Website
