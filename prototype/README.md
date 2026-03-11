@@ -6,8 +6,8 @@
 | II. | [Gutendex API](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutendex-api) |
 | III. | [Gutenberg Library App](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#gutenberg-library-app) |
 | IV. | [Software Requirements](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#software-requirements-table) |
-| V. | [Next Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#next-steps-must-do) |
-| VI. | [Last Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#last-steps-optional) |
+| IV.I | [Next Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#next-steps-must-do) |
+| IV.II | [Last Steps](https://github.com/56006966/GutenbergLibrary/blob/master/prototype/README.md#last-steps-optional) |
 
 
 
