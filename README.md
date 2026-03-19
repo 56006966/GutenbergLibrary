@@ -1,4 +1,4 @@
-# Project Gutenberg Library
+# Gutenberg Library
 
 | Part | Table of Contents |
 | -------- | ------- |
