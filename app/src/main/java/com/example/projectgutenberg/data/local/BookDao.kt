@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.projectgutenberg.data.local.BookEntity
 import kotlinx.coroutines.flow.Flow
+
 @Dao
 interface BookDao {
 
@@ -14,6 +15,9 @@ interface BookDao {
 
     @Query("SELECT * FROM books ORDER BY downloads DESC")
     fun getPopularBooks(): Flow<List<BookEntity>>
+
+    @Query("SELECT * FROM books ORDER BY id DESC")
+    fun getNewestReleases(): Flow<List<BookEntity>>
 
     @Query("SELECT * FROM books")
     fun getAllBooks(): Flow<List<BookEntity>>
@@ -30,12 +34,20 @@ interface BookDao {
     @Query("UPDATE books SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: Int, status: String)
 
+    @Query("UPDATE books SET lastPageIndex = :pageIndex WHERE id = :id")
+    suspend fun updateLastPageIndex(id: Int, pageIndex: Int)
+
     @Query("DELETE FROM books WHERE id = :id")
     suspend fun deleteBookById(id: Int)
+
+    @Query("SELECT COUNT(*) FROM books")
+    suspend fun getBookCount(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(book: BookEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(books: List<BookEntity>)
+    @Query("SELECT * FROM books")
+    fun getAllBooksFlow(): Flow<List<BookEntity>>
 }

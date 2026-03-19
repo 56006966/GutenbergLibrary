@@ -19,9 +19,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://github.com/psiegman/mvn-repo/raw/master/releases") }
+        maven { url = uri("https://jcenter.bintray.com") }
     }
 }
 
 rootProject.name = "ProjectGutenberg"
 include(":app")
- 

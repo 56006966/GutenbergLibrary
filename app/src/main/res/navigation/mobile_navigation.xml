@@ -36,11 +36,25 @@
         tools:layout="@layout/fragment_library" >
         <action
             android:id="@+id/action_libraryFragment_to_bookWebViewFragment"
-            app:destination="@id/nav_book_web_view" />
+            app:destination="@id/nav_book_web_view">
+            <argument
+                android:name="bookId"
+                app:argType="integer" />
+            <argument
+                android:name="bookTitle"
+                app:argType="string" />
+        </action>
     </fragment>
     <fragment
         android:id="@+id/nav_book_web_view"
         android:name="com.example.projectgutenberg.ui.BookWebViewFragment"
         android:label="Book"
-        tools:layout="@layout/fragment_book_webview" />
+        tools:layout="@layout/fragment_book_webview" >
+        <argument
+            android:name="bookId"
+            app:argType="integer" />
+        <argument
+            android:name="bookTitle"
+            app:argType="string" />
+    </fragment>
 </navigation>

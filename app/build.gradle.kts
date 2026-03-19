@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.projectgutenberg"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.projectgutenberg"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -28,23 +28,33 @@ android {
             )
         }
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
     kotlinOptions {
         jvmTarget = "11"
     }
-
     buildFeatures {
         viewBinding = true
         dataBinding = true
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("com.github.kittinunf.fuel:fuel:2.3.1")
+        force("com.github.kittinunf.fuel:fuel-android:2.3.1")
+    }
+}
+
 dependencies {
+    // EPUB & Reader
+    implementation("nl.siegmann.epublib:epublib-core:3.1") {
+        exclude(group = "xmlpull", module = "xmlpull")
+        exclude(group = "org.slf4j", module = "slf4j-simple")
+    }
+
     // Core Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -63,14 +73,15 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.recyclerview)
     kapt(libs.androidx.room.compiler)
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
-    // Retrofit + Gson
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // Networking
+    implementation(libs.okhttp)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
 
-    // Coil (for image loading)
+    // Coil for images
     implementation(libs.coil)
 
     // Coroutines

@@ -1,18 +1,22 @@
 package com.example.projectgutenberg.ui
 
+import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.projectgutenberg.R
 import com.example.projectgutenberg.data.local.BookDatabase
+import com.example.projectgutenberg.data.local.BookEntity
+import com.example.projectgutenberg.data.local.ShelfCache
 import com.example.projectgutenberg.data.repository.BookRepository
 import com.example.projectgutenberg.data.remote.RetrofitInstance
 import com.example.projectgutenberg.databinding.FragmentLibraryBinding
@@ -24,9 +28,10 @@ class LibraryFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var viewModel: LibraryViewModel
-    private val adapter = BookAdapter()
-
-    private var currentStatusFilter = "To Read"
+    private lateinit var uiPreferences: ReaderUiPreferences
+    private val newestAdapter = BookAdapter()
+    private val popularAdapter = BookAdapter()
+    private val libraryAdapter = BookAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,28 +44,47 @@ class LibraryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
+        uiPreferences = ReaderUiPreferences(requireContext())
+        setupRecyclerViews()
         setupViewModel()
+        applyLibraryTheme()
         collectBooks()
     }
 
-    private fun setupRecyclerView() {
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-            adapter = this@LibraryFragment.adapter
-            addItemDecoration(HorizontalSpaceItemDecoration(12))
+    override fun onResume() {
+        super.onResume()
+        if (_binding != null) {
+            applyLibraryTheme()
         }
+    }
 
-        adapter.onBookClick = { book ->
+    private fun setupRecyclerViews() {
+        setupShelf(binding.newestRecyclerView, newestAdapter)
+        setupShelf(binding.popularRecyclerView, popularAdapter)
+        setupShelf(binding.libraryRecyclerView, libraryAdapter)
+
+        val openBook: (BookEntity) -> Unit = { book ->
             val action = LibraryFragmentDirections
                 .actionLibraryFragmentToBookWebViewFragment(book.id, book.title)
             findNavController().navigate(action)
         }
+
+        newestAdapter.onBookClick = openBook
+        popularAdapter.onBookClick = openBook
+        libraryAdapter.onBookClick = openBook
+    }
+
+    private fun setupShelf(recyclerView: RecyclerView, adapter: BookAdapter) {
+        recyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.adapter = adapter
+        recyclerView.addItemDecoration(HorizontalSpaceItemDecoration(12))
     }
 
     private fun setupViewModel() {
         val dao = BookDatabase.getDatabase(requireContext()).bookDao()
         val repository = BookRepository(dao, RetrofitInstance.api)
+        val shelfCache = ShelfCache(requireContext())
 
         viewModel = androidx.lifecycle.ViewModelProvider(
             this,
@@ -68,30 +92,107 @@ class LibraryFragment : Fragment() {
                 override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                     if (modelClass.isAssignableFrom(LibraryViewModel::class.java)) {
                         @Suppress("UNCHECKED_CAST")
-                        return LibraryViewModel(repository) as T
+                        return LibraryViewModel(repository, shelfCache) as T
                     }
                     throw IllegalArgumentException("Unknown ViewModel class")
                 }
             }
         )[LibraryViewModel::class.java]
+    }
 
-        viewModel.loadBooks()
-        viewModel.fetchGutenbergBooks()
+    private fun applyLibraryTheme() {
+        val darkModeEnabled = uiPreferences.isDarkModeEnabled()
+        val text = Color.parseColor(
+            if (darkModeEnabled) ReaderUiPalette.DARK_TEXT else ReaderUiPalette.LIGHT_TEXT
+        )
+        val secondary = Color.parseColor(
+            if (darkModeEnabled) ReaderUiPalette.DARK_SECONDARY_TEXT else ReaderUiPalette.LIGHT_SECONDARY_TEXT
+        )
+
+        binding.libraryRoot.setBackgroundResource(
+            if (darkModeEnabled) R.drawable.wood_library_background_dark else R.drawable.wood_library_background
+        )
+        binding.libraryContent.setBackgroundColor(Color.TRANSPARENT)
+        binding.libraryRecyclerView.setBackgroundResource(
+            if (darkModeEnabled) R.drawable.shelf_row_background_dark else R.drawable.shelf_row_background
+        )
+        binding.newestRecyclerView.setBackgroundResource(
+            if (darkModeEnabled) R.drawable.shelf_row_background_dark else R.drawable.shelf_row_background
+        )
+        binding.popularRecyclerView.setBackgroundResource(
+            if (darkModeEnabled) R.drawable.shelf_row_background_dark else R.drawable.shelf_row_background
+        )
+
+        binding.libraryShelfTitle.setTextColor(text)
+        binding.newestShelfTitle.setTextColor(text)
+        binding.popularShelfTitle.setTextColor(text)
+        binding.libraryEmptyText.setTextColor(secondary)
+        binding.newestLoadingText.setTextColor(secondary)
+        binding.newestEmptyText.setTextColor(secondary)
+        binding.popularLoadingText.setTextColor(secondary)
+        binding.popularEmptyText.setTextColor(secondary)
+
+        newestAdapter.setDarkMode(darkModeEnabled)
+        popularAdapter.setDarkMode(darkModeEnabled)
+        libraryAdapter.setDarkMode(darkModeEnabled)
     }
 
     private fun collectBooks() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.books.collect {
-                    filterBooks()
+                launch {
+                    viewModel.newestBooks.collect { books ->
+                        newestAdapter.submitList(books)
+                        binding.newestEmptyText.visibility =
+                            if (books.isEmpty() && !viewModel.isLoadingNewest.value) View.VISIBLE else View.GONE
+                    }
+                }
+                launch {
+                    viewModel.popularBooks.collect { books ->
+                        popularAdapter.submitList(books)
+                        binding.popularEmptyText.visibility =
+                            if (books.isEmpty() && !viewModel.isLoadingPopular.value) View.VISIBLE else View.GONE
+                    }
+                }
+                launch {
+                    viewModel.libraryBooks.collect { books ->
+                        libraryAdapter.submitList(books)
+                        binding.libraryEmptyText.visibility =
+                            if (books.isEmpty()) View.VISIBLE else View.GONE
+                    }
+                }
+                launch {
+                    viewModel.isLoadingNewest.collect { isLoading ->
+                        binding.newestLoadingText.visibility = if (isLoading) View.VISIBLE else View.GONE
+                        if (!isLoading) {
+                            binding.newestEmptyText.visibility =
+                                if (viewModel.newestBooks.value.isEmpty()) View.VISIBLE else View.GONE
+                        }
+                    }
+                }
+                launch {
+                    viewModel.isLoadingPopular.collect { isLoading ->
+                        binding.popularLoadingText.visibility = if (isLoading) View.VISIBLE else View.GONE
+                        if (!isLoading) {
+                            binding.popularEmptyText.visibility =
+                                if (viewModel.popularBooks.value.isEmpty()) View.VISIBLE else View.GONE
+                        }
+                    }
+                }
+                launch {
+                    viewModel.newestError.collect { error ->
+                        binding.newestEmptyText.text =
+                            error ?: getString(com.example.projectgutenberg.R.string.remote_shelf_empty)
+                    }
+                }
+                launch {
+                    viewModel.popularError.collect { error ->
+                        binding.popularEmptyText.text =
+                            error ?: getString(com.example.projectgutenberg.R.string.remote_shelf_empty)
+                    }
                 }
             }
         }
-    }
-
-    private fun filterBooks() {
-        val filtered = viewModel.books.value.filter { it.status == currentStatusFilter }
-        adapter.submitList(filtered)
     }
 
     override fun onDestroyView() {
@@ -100,9 +201,13 @@ class LibraryFragment : Fragment() {
     }
 }
 
-/** Horizontal spacing for RecyclerView items */
 class HorizontalSpaceItemDecoration(private val space: Int) : RecyclerView.ItemDecoration() {
-    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+    override fun getItemOffsets(
+        outRect: Rect,
+        view: View,
+        parent: RecyclerView,
+        state: RecyclerView.State
+    ) {
         outRect.right = space
     }
 }

@@ -2,8 +2,47 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_home"
-        android:title="Home"/>
+        android:title="@string/menu_home" />
+
+    <item android:title="@string/menu_about">
+        <menu>
+            <item
+                android:id="@+id/nav_about_contact"
+                android:title="@string/menu_contact_us" />
+            <item
+                android:id="@+id/nav_about_history"
+                android:title="@string/menu_history_philosophy" />
+            <item
+                android:id="@+id/nav_about_ereaders"
+                android:title="@string/menu_kindles_ereaders" />
+            <item
+                android:id="@+id/nav_about_help"
+                android:title="@string/menu_help_pages" />
+            <item
+                android:id="@+id/nav_about_offline"
+                android:title="@string/menu_offline_catalogs" />
+            <item
+                android:id="@+id/nav_about_donate"
+                android:title="@string/menu_donate" />
+            <item
+                android:id="@+id/nav_about_paypal"
+                android:title="@string/menu_paypal" />
+        </menu>
+    </item>
+
     <item
-        android:id="@+id/nav_settings"
-        android:title="Settings"/>
+        android:id="@+id/nav_frequently_downloaded"
+        android:title="@string/menu_frequently_downloaded" />
+
+    <item
+        android:id="@+id/nav_master_categories"
+        android:title="@string/menu_master_categories" />
+
+    <item
+        android:id="@+id/nav_reading_lists"
+        android:title="@string/menu_reading_lists" />
+
+    <item
+        android:id="@+id/nav_search_options"
+        android:title="@string/menu_search_options" />
 </menu>
