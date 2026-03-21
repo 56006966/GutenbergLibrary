@@ -16,6 +16,8 @@ data class BookEntity(
     val text: String?,
     val epubPath: String? = null,
     val lastPageIndex: Int = 0,
+    val downloadedAt: Long = 0L,
+    val isFavorite: Boolean = false,
     val status: String,
     val isLoading: Boolean = false
 ) {

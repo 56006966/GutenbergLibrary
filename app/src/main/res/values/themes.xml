@@ -19,6 +19,12 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name="Theme.ProjectGutenberg.Launch" parent="Theme.ProjectGutenberg.NoActionBar">
+        <item name="android:windowBackground">#F3E7D2</item>
+        <item name="android:windowSplashScreenBackground">#F3E7D2</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent_splash_icon</item>
+    </style>
+
     <style name="Theme.ProjectGutenberg.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.ProjectGutenberg.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />

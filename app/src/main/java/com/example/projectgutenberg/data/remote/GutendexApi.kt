@@ -12,9 +12,13 @@ interface GutenbergApi {
 
     @GET("books")
     suspend fun getBooks(
+        @Query("search") search: String? = null,
         @Query("topic") topic: String? = null,
         @Query("sort") sort: String? = null
     ): GutenbergResponse
+
+    @GET
+    suspend fun getBooksPage(@Url url: String): GutenbergResponse
 
     @GET("books/{id}")
     suspend fun getBookDetails(@Path("id") id: Int): BookDto

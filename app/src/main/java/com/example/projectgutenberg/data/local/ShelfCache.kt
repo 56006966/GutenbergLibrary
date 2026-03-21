@@ -4,31 +4,45 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-class ShelfCache(context: Context) {
+class ShelfCache(context: Context) : ShelfCacheStore {
 
-    private val prefs = context.getSharedPreferences("shelf_cache", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("shelf_cache", Context.MODE_PRIVATE)
     private val gson = Gson()
     private val listType = object : TypeToken<List<BookEntity>>() {}.type
 
-    fun getPopularBooks(): List<BookEntity> = getBooks(POPULAR_BOOKS_KEY)
+    override fun getPopularBooks(): List<BookEntity> = getBooks(POPULAR_BOOKS_KEY)
 
-    fun savePopularBooks(books: List<BookEntity>) {
+    override fun savePopularBooks(books: List<BookEntity>) {
         saveBooks(POPULAR_BOOKS_KEY, POPULAR_UPDATED_AT_KEY, books)
     }
 
-    fun getNewestBooks(): List<BookEntity> = getBooks(NEWEST_BOOKS_KEY)
+    override fun getNewestBooks(): List<BookEntity> = getBooks(NEWEST_BOOKS_KEY)
 
-    fun saveNewestBooks(books: List<BookEntity>) {
+    override fun saveNewestBooks(books: List<BookEntity>) {
         saveBooks(NEWEST_BOOKS_KEY, NEWEST_UPDATED_AT_KEY, books)
     }
 
-    fun hasPopularBooks(): Boolean = getPopularBooks().isNotEmpty()
+    override fun getTopDownloadedBooks(): List<BookEntity> = getBooks(TOP_DOWNLOADED_BOOKS_KEY)
 
-    fun hasNewestBooks(): Boolean = getNewestBooks().isNotEmpty()
+    override fun saveTopDownloadedBooks(books: List<BookEntity>) {
+        saveBooks(TOP_DOWNLOADED_BOOKS_KEY, TOP_DOWNLOADED_UPDATED_AT_KEY, books)
+    }
 
-    fun isPopularCacheFresh(maxAgeMs: Long): Boolean = isCacheFresh(POPULAR_UPDATED_AT_KEY, maxAgeMs)
+    override fun hasPopularBooks(): Boolean = getPopularBooks().isNotEmpty()
 
-    fun isNewestCacheFresh(maxAgeMs: Long): Boolean = isCacheFresh(NEWEST_UPDATED_AT_KEY, maxAgeMs)
+    override fun hasNewestBooks(): Boolean = getNewestBooks().isNotEmpty()
+
+    override fun hasTopDownloadedBooks(): Boolean = getTopDownloadedBooks().isNotEmpty()
+
+    override fun isPopularCacheFresh(maxAgeMs: Long): Boolean = isCacheFresh(POPULAR_UPDATED_AT_KEY, maxAgeMs)
+
+    override fun isNewestCacheFresh(maxAgeMs: Long): Boolean = isCacheFresh(NEWEST_UPDATED_AT_KEY, maxAgeMs)
+
+    override fun isTopDownloadedCacheFresh(maxAgeMs: Long): Boolean =
+        isCacheFresh(TOP_DOWNLOADED_UPDATED_AT_KEY, maxAgeMs)
+
+    override fun context(): Context = appContext
 
     private fun getBooks(key: String): List<BookEntity> {
         val json = prefs.getString(key, null) ?: return emptyList()
@@ -58,7 +72,9 @@ class ShelfCache(context: Context) {
     private companion object {
         const val POPULAR_BOOKS_KEY = "popular_books"
         const val NEWEST_BOOKS_KEY = "newest_books"
+        const val TOP_DOWNLOADED_BOOKS_KEY = "top_downloaded_books"
         const val POPULAR_UPDATED_AT_KEY = "popular_books_updated_at"
         const val NEWEST_UPDATED_AT_KEY = "newest_books_updated_at"
+        const val TOP_DOWNLOADED_UPDATED_AT_KEY = "top_downloaded_books_updated_at"
     }
 }

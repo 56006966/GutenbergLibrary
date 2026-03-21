@@ -1,19 +1,23 @@
 package com.example.projectgutenberg.ui
 
 import android.util.Log
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectgutenberg.data.local.BookEntity
-import com.example.projectgutenberg.data.local.ShelfCache
+import com.example.projectgutenberg.data.local.ShelfCacheStore
 import com.example.projectgutenberg.data.repository.BookRepository
+import com.example.projectgutenberg.util.isNetworkAvailable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class LibraryViewModel(
     private val repository: BookRepository,
-    private val shelfCache: ShelfCache
+    private val shelfCache: ShelfCacheStore,
+    private val networkChecker: () -> Boolean = { isNetworkAvailable(shelfCache.context()) }
 ) : ViewModel() {
 
     companion object {
@@ -56,11 +60,32 @@ class LibraryViewModel(
         }
     }
 
+    fun toggleFavorite(book: BookEntity) {
+        viewModelScope.launch {
+            repository.updateFavorite(book.id, !book.isFavorite)
+        }
+    }
+
+    fun removeFromLibrary(context: Context, book: BookEntity) {
+        viewModelScope.launch {
+            repository.removeLocalBook(context, book)
+        }
+    }
+
     private fun refreshPopularBooks() {
         viewModelScope.launch {
             if (shelfCache.hasPopularBooks() && shelfCache.isPopularCacheFresh(CACHE_MAX_AGE_MS)) {
                 _isLoadingPopular.value = false
                 _popularError.value = null
+                return@launch
+            }
+            if (!networkChecker()) {
+                _isLoadingPopular.value = false
+                _popularError.value = if (shelfCache.hasPopularBooks()) {
+                    "Offline. Showing saved most popular books."
+                } else {
+                    "Offline. Connect to the internet to load most popular books."
+                }
                 return@launch
             }
 
@@ -73,6 +98,13 @@ class LibraryViewModel(
                 Log.d(TAG, "Loaded ${entities.size} popular books")
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: UnknownHostException) {
+                Log.w(TAG, "Popular books unavailable while offline", e)
+                _popularError.value = buildRemoteShelfError(
+                    exception = e,
+                    hasCache = shelfCache.hasPopularBooks(),
+                    cachedMessage = "Offline. Showing saved most popular books."
+                )
             } catch (e: HttpException) {
                 Log.e(TAG, "Failed to fetch popular books", e)
                 _popularError.value = buildRemoteShelfError(
@@ -100,6 +132,15 @@ class LibraryViewModel(
                 _newestError.value = null
                 return@launch
             }
+            if (!networkChecker()) {
+                _isLoadingNewest.value = false
+                _newestError.value = if (shelfCache.hasNewestBooks()) {
+                    "Offline. Showing saved newest releases."
+                } else {
+                    "Offline. Connect to the internet to load newest releases."
+                }
+                return@launch
+            }
 
             _isLoadingNewest.value = true
             _newestError.value = null
@@ -110,6 +151,13 @@ class LibraryViewModel(
                 Log.d(TAG, "Loaded ${entities.size} newest books")
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: UnknownHostException) {
+                Log.w(TAG, "Newest books unavailable while offline", e)
+                _newestError.value = buildRemoteShelfError(
+                    exception = e,
+                    hasCache = shelfCache.hasNewestBooks(),
+                    cachedMessage = "Offline. Showing saved newest releases."
+                )
             } catch (e: HttpException) {
                 Log.e(TAG, "Failed to fetch newest books", e)
                 _newestError.value = buildRemoteShelfError(
@@ -146,6 +194,7 @@ class LibraryViewModel(
                 }
             }
             is SocketTimeoutException -> "Gutendex took too long to respond."
+            is UnknownHostException -> "Offline. Connect to the internet to load books."
             else -> exception.message ?: "Unable to load books from Gutendex."
         }
     }

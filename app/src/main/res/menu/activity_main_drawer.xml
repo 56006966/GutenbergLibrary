@@ -4,7 +4,13 @@
         android:id="@+id/nav_home"
         android:title="@string/menu_home" />
 
-    <item android:title="@string/menu_about">
+    <item
+        android:id="@+id/nav_my_library"
+        android:title="@string/shelf_my_library" />
+
+    <item
+        android:id="@+id/nav_about_group"
+        android:title="@string/menu_about">
         <menu>
             <item
                 android:id="@+id/nav_about_contact"

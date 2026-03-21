@@ -13,4 +13,15 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="Theme.ProjectGutenberg.NoActionBar" parent="Theme.ProjectGutenberg">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.ProjectGutenberg.Launch" parent="Theme.ProjectGutenberg.NoActionBar">
+        <item name="android:windowBackground">#F3E7D2</item>
+        <item name="android:windowSplashScreenBackground">#F3E7D2</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent_splash_icon</item>
+    </style>
 </resources>

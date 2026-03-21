@@ -40,7 +40,22 @@
     <fragment
         android:id="@+id/nav_frequently_downloaded_screen"
         android:name="com.example.projectgutenberg.ui.FrequentlyDownloadedFragment"
-        android:label="@string/menu_frequently_downloaded" />
+        android:label="@string/menu_frequently_downloaded" >
+        <action
+            android:id="@+id/action_nav_frequently_downloaded_screen_to_bookWebViewFragment"
+            app:destination="@id/bookWebViewFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right">
+            <argument
+                android:name="bookId"
+                app:argType="integer" />
+            <argument
+                android:name="bookTitle"
+                app:argType="string" />
+        </action>
+    </fragment>
 
     <fragment
         android:id="@+id/nav_master_categories_screen"
@@ -56,5 +71,25 @@
         android:id="@+id/nav_search_options_screen"
         android:name="com.example.projectgutenberg.ui.SearchOptionsFragment"
         android:label="@string/menu_search_options" />
+
+    <fragment
+        android:id="@+id/nav_my_library_screen"
+        android:name="com.example.projectgutenberg.ui.MyLibraryFragment"
+        android:label="@string/shelf_my_library" >
+        <action
+            android:id="@+id/action_nav_my_library_screen_to_bookWebViewFragment"
+            app:destination="@id/bookWebViewFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right">
+            <argument
+                android:name="bookId"
+                app:argType="integer" />
+            <argument
+                android:name="bookTitle"
+                app:argType="string" />
+        </action>
+    </fragment>
 
 </navigation>

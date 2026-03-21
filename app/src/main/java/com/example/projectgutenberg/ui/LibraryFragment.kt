@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -48,6 +49,10 @@ class LibraryFragment : Fragment() {
         setupRecyclerViews()
         setupViewModel()
         applyLibraryTheme()
+        binding.libraryThemeButton.setOnClickListener {
+            uiPreferences.setDarkModeEnabled(!uiPreferences.isDarkModeEnabled())
+            applyLibraryTheme()
+        }
         collectBooks()
     }
 
@@ -135,6 +140,10 @@ class LibraryFragment : Fragment() {
         newestAdapter.setDarkMode(darkModeEnabled)
         popularAdapter.setDarkMode(darkModeEnabled)
         libraryAdapter.setDarkMode(darkModeEnabled)
+        binding.libraryThemeButton.apply {
+            setImageResource(if (darkModeEnabled) R.drawable.ic_theme_sun else R.drawable.ic_theme_moon)
+            imageTintList = android.content.res.ColorStateList.valueOf(text)
+        }
     }
 
     private fun collectBooks() {
@@ -156,7 +165,7 @@ class LibraryFragment : Fragment() {
                 }
                 launch {
                     viewModel.libraryBooks.collect { books ->
-                        libraryAdapter.submitList(books)
+                        libraryAdapter.submitList(books.sortedBy { it.title })
                         binding.libraryEmptyText.visibility =
                             if (books.isEmpty()) View.VISIBLE else View.GONE
                     }

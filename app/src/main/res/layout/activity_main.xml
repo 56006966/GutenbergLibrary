@@ -24,13 +24,72 @@
             android:id="@+id/openDrawerButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|start"
-            android:layout_marginStart="16dp"
+            android:layout_gravity="top|end"
+            android:layout_marginEnd="16dp"
             android:layout_marginTop="24dp"
             android:contentDescription="@string/open_navigation"
             android:src="@android:drawable/ic_menu_sort_by_size"
             app:backgroundTint="@android:color/black"
             app:tint="@android:color/white" />
+
+        <FrameLayout
+            android:id="@+id/launchLoadingOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:background="#F3E7D2"
+            android:clickable="false"
+            android:focusable="false"
+            android:visibility="gone">
+
+            <com.example.projectgutenberg.ui.LaunchTileWallView
+                android:id="@+id/launchTileWall"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:alpha="0.88" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#A6F3E7D2" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp">
+
+                <TextView
+                    android:id="@+id/launchLoadingTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/launch_loading_title"
+                    android:textColor="#1D1A14"
+                    android:textSize="34sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/launchLoadingSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="@string/launch_loading_subtitle"
+                    android:textColor="#5F5546"
+                    android:textSize="16sp" />
+
+                <ProgressBar
+                    android:id="@+id/launchLoadingProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="220dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:indeterminate="true"
+                    android:indeterminateTint="#2F2A23" />
+            </LinearLayout>
+        </FrameLayout>
     </FrameLayout>
 
     <com.google.android.material.navigation.NavigationView
