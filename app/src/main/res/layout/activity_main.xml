@@ -45,13 +45,7 @@
             <com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallView
                 android:id="@+id/launchTileWall"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:alpha="0.88" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#A6F3E7D2" />
+                android:layout_height="match_parent" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -61,33 +55,45 @@
                 android:paddingStart="28dp"
                 android:paddingEnd="28dp">
 
-                <TextView
-                    android:id="@+id/launchLoadingTitle"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/launch_loading_title"
-                    android:textColor="#1D1A14"
-                    android:textSize="34sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/launchLoadingSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:background="#E6000000"
                     android:gravity="center"
-                    android:text="@string/launch_loading_subtitle"
-                    android:textColor="#5F5546"
-                    android:textSize="16sp" />
+                    android:orientation="vertical"
+                    android:paddingStart="28dp"
+                    android:paddingTop="24dp"
+                    android:paddingEnd="28dp"
+                    android:paddingBottom="24dp">
 
-                <ProgressBar
-                    android:id="@+id/launchLoadingProgress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="220dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="22dp"
-                    android:indeterminate="true"
-                    android:indeterminateTint="#2F2A23" />
+                    <TextView
+                        android:id="@+id/launchLoadingTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/launch_loading_title"
+                        android:textColor="#F5F1E8"
+                        android:textSize="34sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/launchLoadingSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="@string/launch_loading_subtitle"
+                        android:textColor="#E0D5C5"
+                        android:textSize="16sp" />
+
+                    <ProgressBar
+                        android:id="@+id/launchLoadingProgress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="220dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="22dp"
+                        android:indeterminate="true"
+                        android:indeterminateTint="#F5F1E8" />
+                </LinearLayout>
             </LinearLayout>
         </FrameLayout>
     </FrameLayout>

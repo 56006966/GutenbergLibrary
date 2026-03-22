@@ -56,12 +56,11 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <LinearLayout
+            <FrameLayout
                 android:id="@+id/bookActionsRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
-                android:orientation="horizontal"
                 android:padding="8dp"
                 android:visibility="gone">
 
@@ -69,35 +68,32 @@
                     android:id="@+id/favoriteButton"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
+                    android:layout_gravity="start|top"
                     android:background="#70000000"
                     android:contentDescription="@string/favorite_book"
                     android:padding="4dp"
                     android:src="@android:drawable/btn_star_big_off" />
 
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
                 <ImageButton
                     android:id="@+id/removeButton"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
+                    android:layout_gravity="end|top"
                     android:background="#70000000"
                     android:contentDescription="@string/remove_book"
                     android:padding="4dp"
                     android:src="@android:drawable/ic_menu_delete" />
-            </LinearLayout>
+            </FrameLayout>
 
             <ImageView
                 android:id="@+id/favoriteBadge"
                 android:layout_width="18dp"
                 android:layout_height="18dp"
-                android:layout_gravity="top|end"
+                android:layout_gravity="top|start"
                 android:layout_margin="6dp"
                 android:contentDescription="@string/favorite_book"
-                android:src="@drawable/ic_heart_filled"
-                android:tint="#C63A4A"
+                android:src="@android:drawable/btn_star_big_on"
+                android:tint="#E3B341"
                 android:visibility="gone" />
         </FrameLayout>
 

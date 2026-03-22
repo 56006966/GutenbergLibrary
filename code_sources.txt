@@ -1,0 +1,3 @@
+https://www.hdwatts.com/blog/enhancing-portfolio-animated-scroll
+https://dev.to/morewings/from-scratch-build-a-css-animated-react-carousel-component-5fhk
+https://codepen.io/dhanishgajjar/pen/bjaYYo
