@@ -41,6 +41,7 @@
     <string name="ink_mode_on">Dark Mode</string>
     <string name="ink_mode_off">Light Mode</string>
     <string name="back_to_library">Back</string>
+    <string name="contents">Contents</string>
     <string name="favorite_book">Favorite book</string>
     <string name="remove_book">Remove book</string>
     <string name="open_navigation">Open navigation</string>
@@ -96,4 +97,5 @@
     <string name="tts_voice_hint">Long-press read aloud to choose a voice.</string>
     <string name="tts_position_label">Read-aloud position: word %1$d of %2$d</string>
     <string name="tts_position_ready">Read aloud will start from the selected word.</string>
+    <string name="toc_unavailable">No table of contents is available for this book.</string>
 </resources>

@@ -25,5 +25,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ProjectGutenberg"
+rootProject.name = "ProjectGutenbergLibrary"
 include(":app")

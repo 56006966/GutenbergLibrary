@@ -52,26 +52,25 @@
 
     <LinearLayout
         android:id="@+id/frequentlyDownloadedPagingLoading"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
         android:paddingTop="8dp"
         android:paddingBottom="4dp"
         android:visibility="gone">
 
-        <ProgressBar
+        <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/frequentlyDownloadedPagingProgress"
-            style="?android:attr/progressBarStyleSmall"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/frequentlyDownloadedPagingText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
             android:text="@string/frequently_downloaded_loading_more"
             android:textAppearance="?attr/textAppearanceBodyMedium" />
     </LinearLayout>

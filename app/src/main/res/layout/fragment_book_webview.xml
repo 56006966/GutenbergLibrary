@@ -96,6 +96,13 @@
                                 android:src="@drawable/ic_theme_moon" />
 
                             <Button
+                                android:id="@+id/contentsButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="8dp"
+                                android:text="@string/contents" />
+
+                            <Button
                                 android:id="@+id/textSizeButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -114,11 +121,10 @@
                         android:text="@string/book_opening_status"
                         android:textAppearance="?attr/textAppearanceBodyLarge" />
 
-                    <ProgressBar
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progressBar"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
                         android:layout_marginTop="12dp" />
 
                     <TextView
@@ -167,6 +173,21 @@
                         android:layout_height="match_parent"
                         android:background="#66000000"
                         android:visibility="gone" />
+
+                    <ImageButton
+                        android:id="@+id/readAloudCursorHandle"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/bg_read_aloud_cursor"
+                        android:contentDescription="@string/read_aloud"
+                        android:padding="11dp"
+                        android:src="@drawable/ic_read_aloud_cursor"
+                        android:translationZ="12dp"
+                        android:visibility="gone"
+                        app:tint="@android:color/white" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -195,23 +216,6 @@
                             android:layout_marginBottom="4dp"
                             android:gravity="center"
                             android:textAppearance="?attr/textAppearanceBodyMedium" />
-
-                        <TextView
-                            android:id="@+id/ttsPositionText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:gravity="center"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:visibility="gone" />
-
-                        <SeekBar
-                            android:id="@+id/ttsPositionSeekBar"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:max="0"
-                            android:visibility="gone" />
                     </LinearLayout>
 
                     <SeekBar
