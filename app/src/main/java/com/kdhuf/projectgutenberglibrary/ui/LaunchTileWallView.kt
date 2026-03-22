@@ -28,8 +28,8 @@ class LaunchTileWallView @JvmOverloads constructor(
         private const val PLACEHOLDER_TITLE = "Project Gutenberg"
         private const val PLACEHOLDER_AUTHOR = "Classic literature"
         private const val LOG_TAG = "LaunchTileWallView"
-        private const val FRAME_LOG_INTERVAL_MS = 2_000L
         private const val SCROLL_SPEED_DP_PER_SECOND = 18f
+        private const val VERBOSE_LOGGING = false
     }
 
     private val viewport = FrameLayout(context)
@@ -41,15 +41,14 @@ class LaunchTileWallView @JvmOverloads constructor(
     private val baseTileSize = 92.dp()
     private val tileGap = 14.dp()
     private var viewportScale = 1f
-    private var previewVisibleRows: Int? = null
-    private var previewVisibleCols: Int? = null
-    private var uniformPreviewMode = false
+    private var fixedVisibleRows: Int? = null
+    private var fixedVisibleCols: Int? = null
+    private var useUniformGrid = false
     private var books: List<BookEntity> = emptyList()
     private var touchPaused = false
     private var lastFrameNanos = 0L
     private var segmentHeightPx = 0f
     private var scrollOffsetPx = 0f
-    private var lastFrameLogNanos = 0L
 
     private val startupCoverIds = listOf(
         1342, 84, 11, 98, 2701, 1661, 1952, 74, 64317, 174,
@@ -93,7 +92,7 @@ class LaunchTileWallView @JvmOverloads constructor(
         perspectiveStage.addView(scrollStrip)
         viewport.addView(perspectiveStage)
         addView(viewport)
-        setPlaceholderTiles()
+        books = buildPlaceholderBooks()
     }
 
     fun setBooks(items: List<BookEntity>) {
@@ -103,35 +102,27 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     fun setPlaceholderTiles() {
         if (books.isEmpty()) {
-            books = List(PLACEHOLDER_BOOK_COUNT) { index ->
-                val bookId = startupCoverIds[index % startupCoverIds.size]
-                BookEntity(
-                    id = bookId,
-                    title = PLACEHOLDER_TITLE,
-                    author = PLACEHOLDER_AUTHOR,
-                    genre = PLACEHOLDER_AUTHOR,
-                    downloads = 0,
-                    coverUrl = buildCoverUrl(bookId),
-                    coverPath = null,
-                    text = null,
-                    epubPath = null,
-                    status = BookEntity.STATUS_TO_READ
-                )
-            }
+            books = buildPlaceholderBooks()
         }
         rebuildWall()
     }
 
     fun setViewportScale(scale: Float) {
-        viewportScale = scale.coerceIn(0.5f, 1f)
-        Log.d(LOG_TAG, "setViewportScale scale=$viewportScale")
+        val newScale = scale.coerceIn(0.5f, 1f)
+        if (viewportScale == newScale) return
+        viewportScale = newScale
+        debugLog { "setViewportScale scale=$viewportScale" }
         applyViewportBounds()
     }
 
-    fun setPreviewWindow(visibleRows: Int, visibleCols: Int) {
-        previewVisibleRows = visibleRows.coerceIn(2, 6)
-        previewVisibleCols = visibleCols.coerceIn(2, 6)
-        uniformPreviewMode = true
+    fun setVisibleWindow(visibleRows: Int, visibleCols: Int) {
+        val newRows = visibleRows.coerceIn(2, 6)
+        val newCols = visibleCols.coerceIn(2, 6)
+        val changed = fixedVisibleRows != newRows || fixedVisibleCols != newCols || !useUniformGrid
+
+        fixedVisibleRows = newRows
+        fixedVisibleCols = newCols
+        useUniformGrid = true
         perspectiveStage.rotationX = 0f
         perspectiveStage.rotation = 0f
         perspectiveStage.translationX = 0f
@@ -141,27 +132,27 @@ class LaunchTileWallView @JvmOverloads constructor(
             LayoutParams.WRAP_CONTENT,
             Gravity.TOP or Gravity.CENTER_HORIZONTAL
         )
-        Log.d(
-            LOG_TAG,
-            "setPreviewWindow rows=$previewVisibleRows cols=$previewVisibleCols"
-        )
-        if (isAttachedToWindow && isActuallyVisible()) {
+        debugLog { "setVisibleWindow rows=$fixedVisibleRows cols=$fixedVisibleCols" }
+        if (changed && isAttachedToWindow && isActuallyVisible()) {
             rebuildWall()
         }
     }
 
+    fun setPreviewWindow(visibleRows: Int, visibleCols: Int) {
+        setVisibleWindow(visibleRows, visibleCols)
+    }
+
     fun pauseAnimation() {
         touchPaused = true
-        Log.d(LOG_TAG, "pauseAnimation")
+        debugLog { "pauseAnimation" }
         stopAnimation()
     }
 
     fun resumeAnimation() {
         touchPaused = false
-        Log.d(
-            LOG_TAG,
+        debugLog {
             "resumeAnimation visible=${isActuallyVisible()} segmentHeightPx=$segmentHeightPx childCount=${scrollStrip.childCount}"
-        )
+        }
         if (isActuallyVisible()) {
             if (segmentHeightPx > 0f && scrollStrip.childCount > 0) {
                 startAnimation()
@@ -173,30 +164,29 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        Log.d(LOG_TAG, "onAttachedToWindow visible=${isActuallyVisible()}")
+        debugLog { "onAttachedToWindow visible=${isActuallyVisible()}" }
         if (isActuallyVisible()) {
             rebuildWall()
         }
     }
 
     override fun onDetachedFromWindow() {
-        Log.d(LOG_TAG, "onDetachedFromWindow")
+        debugLog { "onDetachedFromWindow" }
         stopAnimation()
         super.onDetachedFromWindow()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        Log.d(LOG_TAG, "onSizeChanged w=$w h=$h oldw=$oldw oldh=$oldh")
+        debugLog { "onSizeChanged w=$w h=$h oldw=$oldw oldh=$oldh" }
         applyViewportBounds()
     }
 
     override fun onVisibilityAggregated(isVisible: Boolean) {
         super.onVisibilityAggregated(isVisible)
-        Log.d(
-            LOG_TAG,
+        debugLog {
             "onVisibilityAggregated isVisible=$isVisible attached=$isAttachedToWindow touchPaused=$touchPaused"
-        )
+        }
         if (!isAttachedToWindow) return
         if (isVisible) {
             if (!touchPaused) {
@@ -209,15 +199,15 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     private fun rebuildWall() {
         if (!isAttachedToWindow) {
-            Log.d(LOG_TAG, "rebuildWall skipped: not attached")
+            debugLog { "rebuildWall skipped: not attached" }
             return
         }
         if (!isActuallyVisible()) {
-            Log.d(LOG_TAG, "rebuildWall skipped: not visible")
+            debugLog { "rebuildWall skipped: not visible" }
             return
         }
         if (books.isEmpty()) {
-            Log.d(LOG_TAG, "rebuildWall skipped: no books")
+            debugLog { "rebuildWall skipped: no books" }
             return
         }
 
@@ -229,10 +219,9 @@ class LaunchTileWallView @JvmOverloads constructor(
         val tileSize = computeTileSizePx(visibleRows, visibleCols)
         val rowCount = computeSegmentRowCount(visibleRows)
         val tilesPerRow = computeSegmentTilesPerRow(visibleCols)
-        Log.d(
-            LOG_TAG,
+        debugLog {
             "rebuildWall viewport=${viewport.width}x${viewport.height} host=${width}x${height} visible=${visibleRows}x$visibleCols segmentRows=$rowCount segmentCols=$tilesPerRow tileSize=$tileSize books=${books.size}"
-        )
+        }
 
         val segmentWidth = computeSegmentWidthPx(tilesPerRow, tileSize)
         val segmentHeight = computeSegmentHeightPx(rowCount, tileSize)
@@ -244,7 +233,7 @@ class LaunchTileWallView @JvmOverloads constructor(
         perspectiveStage.layoutParams = LayoutParams(
             segmentWidth,
             if (viewport.height > 0) viewport.height else LayoutParams.WRAP_CONTENT,
-            if (uniformPreviewMode) Gravity.TOP or Gravity.CENTER_HORIZONTAL else Gravity.CENTER
+            if (useUniformGrid) Gravity.TOP or Gravity.CENTER_HORIZONTAL else Gravity.CENTER
         )
 
         val leadingSegment = createWallSegment(rowCount, tilesPerRow, tileSize, segmentWidth, segmentHeight)
@@ -259,20 +248,18 @@ class LaunchTileWallView @JvmOverloads constructor(
             val computedSegmentHeight = segmentHeight
             val segmentHeight = measuredSegmentHeight.takeIf { it > 0 } ?: computedSegmentHeight
             if (segmentHeight <= 0) {
-                Log.d(
-                    LOG_TAG,
+                debugLog {
                     "rebuildWall post skipped: measuredSegmentHeight=$measuredSegmentHeight computedSegmentHeight=$computedSegmentHeight"
-                )
+                }
                 return@post
             }
 
             segmentHeightPx = segmentHeight.toFloat()
             scrollOffsetPx = 0f
             scrollStrip.translationY = -segmentHeightPx
-            Log.d(
-                LOG_TAG,
+            debugLog {
                 "rebuildWall ready segmentHeightPx=$segmentHeightPx measuredSegmentHeight=$measuredSegmentHeight computedSegmentHeight=$computedSegmentHeight"
-            )
+            }
             startAnimation()
             invalidate()
         }
@@ -307,7 +294,7 @@ class LaunchTileWallView @JvmOverloads constructor(
                     if (rowIndex < rowCount - 1) {
                         bottomMargin = tileGap
                     }
-                    leftMargin = if (uniformPreviewMode) 0 else if (rowIndex % 2 == 1) tileSize / 2 else 0
+                    leftMargin = if (useUniformGrid) 0 else if (rowIndex % 2 == 1) tileSize / 2 else 0
                 }
             }
 
@@ -323,25 +310,24 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     private fun startAnimation() {
         if (touchPaused) {
-            Log.d(LOG_TAG, "startAnimation skipped: touchPaused")
+            debugLog { "startAnimation skipped: touchPaused" }
             return
         }
         if (!isActuallyVisible()) {
-            Log.d(LOG_TAG, "startAnimation skipped: not visible")
+            debugLog { "startAnimation skipped: not visible" }
             return
         }
         if (segmentHeightPx <= 0f) {
-            Log.d(LOG_TAG, "startAnimation skipped: segmentHeightPx=$segmentHeightPx")
+            debugLog { "startAnimation skipped: segmentHeightPx=$segmentHeightPx" }
             return
         }
         if (scrollFrameCallback != null) {
-            Log.d(LOG_TAG, "startAnimation skipped: already running")
+            debugLog { "startAnimation skipped: already running" }
             return
         }
 
         lastFrameNanos = 0L
-        lastFrameLogNanos = 0L
-        Log.d(LOG_TAG, "startAnimation segmentHeightPx=$segmentHeightPx")
+        debugLog { "startAnimation segmentHeightPx=$segmentHeightPx" }
         scrollFrameCallback = Choreographer.FrameCallback { frameTimeNanos ->
             stepAnimation(frameTimeNanos)
         }
@@ -360,7 +346,6 @@ class LaunchTileWallView @JvmOverloads constructor(
             val pixelsPerSecond = SCROLL_SPEED_DP_PER_SECOND * resources.displayMetrics.density
             scrollOffsetPx = (scrollOffsetPx + (pixelsPerSecond * deltaSeconds)) % segmentHeightPx
             scrollStrip.translationY = -segmentHeightPx - scrollOffsetPx
-            maybeLogFrame(frameTimeNanos, deltaSeconds)
         } else {
             scrollStrip.translationY = -segmentHeightPx
         }
@@ -406,12 +391,11 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     private fun stopAnimation() {
         if (scrollFrameCallback != null) {
-            Log.d(LOG_TAG, "stopAnimation offset=$scrollOffsetPx")
+            debugLog { "stopAnimation offset=$scrollOffsetPx" }
         }
         scrollFrameCallback?.let(choreographer::removeFrameCallback)
         scrollFrameCallback = null
         lastFrameNanos = 0L
-        lastFrameLogNanos = 0L
     }
 
     private fun applyViewportBounds() {
@@ -422,10 +406,9 @@ class LaunchTileWallView @JvmOverloads constructor(
             scaledHeight,
             Gravity.CENTER
         )
-        Log.d(
-            LOG_TAG,
+        debugLog {
             "applyViewportBounds host=${width}x${height} viewport=${scaledWidth}x${scaledHeight} scale=$viewportScale"
-        )
+        }
         viewport.requestLayout()
     }
 
@@ -440,21 +423,21 @@ class LaunchTileWallView @JvmOverloads constructor(
     }
 
     private fun computeVisibleRows(): Int {
-        previewVisibleRows?.let { return it }
+        fixedVisibleRows?.let { return it }
         val viewportHeight = if (viewport.height > 0) viewport.height else height
         val tileSpan = (baseTileSize + tileGap).coerceAtLeast(1)
         return ((viewportHeight / tileSpan) + 1).coerceIn(3, 6)
     }
 
     private fun computeVisibleCols(): Int {
-        previewVisibleCols?.let { return it }
+        fixedVisibleCols?.let { return it }
         val viewportWidth = if (viewport.width > 0) viewport.width else width
         val tileSpan = (baseTileSize + tileGap).coerceAtLeast(1)
         return ((viewportWidth / tileSpan) + 1).coerceIn(3, 8)
     }
 
     private fun computeSegmentRowCount(visibleRows: Int): Int {
-        return if (uniformPreviewMode) {
+        return if (useUniformGrid) {
             (visibleRows * 4).coerceIn(8, 16)
         } else {
             (visibleRows + 2).coerceIn(4, 10)
@@ -462,7 +445,7 @@ class LaunchTileWallView @JvmOverloads constructor(
     }
 
     private fun computeSegmentTilesPerRow(visibleCols: Int): Int {
-        return if (uniformPreviewMode) {
+        return if (useUniformGrid) {
             (visibleCols + 2).coerceIn(5, 8)
         } else {
             (visibleCols + 2).coerceIn(5, 12)
@@ -478,7 +461,15 @@ class LaunchTileWallView @JvmOverloads constructor(
 
         val widthBased = ((viewportWidth - (tileGap * (visibleCols - 1))) / visibleCols).coerceAtLeast(baseTileSize)
         val heightBased = ((viewportHeight - (tileGap * (visibleRows - 1))) / visibleRows).coerceAtLeast(baseTileSize)
-        return minOf(widthBased, heightBased)
+        val uncappedTileSize = minOf(widthBased, heightBased)
+        if (!useUniformGrid) return uncappedTileSize
+
+        val window = LaunchTileWallWindow(visibleRows = visibleRows, visibleCols = visibleCols)
+        val maxTileSize = LaunchTileWallLayoutLogic.maxTileSizePx(
+            window = window,
+            density = resources.displayMetrics.density
+        )
+        return minOf(uncappedTileSize, maxTileSize)
     }
 
     private fun computeSegmentHeightPx(rowCount: Int, tileSize: Int): Int {
@@ -487,18 +478,6 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     private fun computeSegmentWidthPx(tilesPerRow: Int, tileSize: Int): Int {
         return (tilesPerRow * tileSize) + ((tilesPerRow - 1).coerceAtLeast(0) * tileGap)
-    }
-
-    private fun maybeLogFrame(frameTimeNanos: Long, deltaSeconds: Float) {
-        if (lastFrameLogNanos == 0L ||
-            frameTimeNanos - lastFrameLogNanos >= FRAME_LOG_INTERVAL_MS * 1_000_000L
-        ) {
-            Log.d(
-                LOG_TAG,
-                "frame delta=${"%.4f".format(deltaSeconds)} offset=${"%.1f".format(scrollOffsetPx)} translationY=${"%.1f".format(scrollStrip.translationY)}"
-            )
-            lastFrameLogNanos = frameTimeNanos
-        }
     }
 
     @VisibleForTesting
@@ -515,6 +494,30 @@ class LaunchTileWallView @JvmOverloads constructor(
 
     private fun isActuallyVisible(): Boolean {
         return visibility == View.VISIBLE && windowVisibility == View.VISIBLE && isShown
+    }
+
+    private fun buildPlaceholderBooks(): List<BookEntity> {
+        return List(PLACEHOLDER_BOOK_COUNT) { index ->
+            val bookId = startupCoverIds[index % startupCoverIds.size]
+            BookEntity(
+                id = bookId,
+                title = PLACEHOLDER_TITLE,
+                author = PLACEHOLDER_AUTHOR,
+                genre = PLACEHOLDER_AUTHOR,
+                downloads = 0,
+                coverUrl = buildCoverUrl(bookId),
+                coverPath = null,
+                text = null,
+                epubPath = null,
+                status = BookEntity.STATUS_TO_READ
+            )
+        }
+    }
+
+    private inline fun debugLog(message: () -> String) {
+        if (VERBOSE_LOGGING) {
+            Log.d(LOG_TAG, message())
+        }
     }
 
     private fun Int.dp(): Int = (this * resources.displayMetrics.density).roundToInt()

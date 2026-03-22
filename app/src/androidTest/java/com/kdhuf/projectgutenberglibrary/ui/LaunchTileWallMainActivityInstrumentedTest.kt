@@ -21,8 +21,12 @@ class LaunchTileWallMainActivityInstrumentedTest {
             scenario.onActivity { activity ->
                 val tileWall = activity.findViewById<LaunchTileWallView>(R.id.launchTileWall)
                 val (segmentRows, segmentCols) = tileWall.debugGridSize()
-                val expectedRows = if (tileWall.width > tileWall.height) 8 else 12
-                val expectedCols = if (tileWall.width > tileWall.height) 6 else 5
+                val window = LaunchTileWallLayoutLogic.windowForBounds(
+                    width = tileWall.width,
+                    height = tileWall.height
+                )
+                val expectedRows = LaunchTileWallLayoutLogic.segmentRows(window)
+                val expectedCols = LaunchTileWallLayoutLogic.segmentCols(window)
 
                 assertTrue(tileWall.width > 0)
                 assertTrue(tileWall.height > 0)

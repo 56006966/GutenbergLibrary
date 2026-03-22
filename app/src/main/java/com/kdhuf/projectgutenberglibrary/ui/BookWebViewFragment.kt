@@ -20,10 +20,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.GestureDetector
 import android.view.animation.DecelerateInterpolator
 import android.widget.SeekBar
 import android.webkit.WebViewClient
-import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -80,7 +80,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         chapterTitlesByPage = emptyList(),
         printedPageLabelsByPage = emptyList()
     )
-    private lateinit var gestureDetector: GestureDetectorCompat
+    private lateinit var gestureDetector: GestureDetector
     private var webViewScrollListener: ViewTreeObserver.OnScrollChangedListener? = null
     private lateinit var ttsController: ReaderTtsController
     private var ttsRendererAdapter: ReaderTtsRendererAdapter? = null
@@ -216,7 +216,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
     }
 
     private fun setupTouchNavigation() {
-        gestureDetector = GestureDetectorCompat(requireContext(), ReaderGestureListener())
+        gestureDetector = GestureDetector(requireContext(), ReaderGestureListener())
         val listener = View.OnTouchListener { _, event ->
             gestureDetector.onTouchEvent(event)
             false

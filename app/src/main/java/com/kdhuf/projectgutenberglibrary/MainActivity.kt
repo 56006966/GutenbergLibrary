@@ -2,11 +2,10 @@ package com.kdhuf.projectgutenberglibrary
 
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.content.Intent
 import android.os.Bundle
-import android.view.ViewTreeObserver
+import android.text.SpannableString
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
@@ -17,12 +16,16 @@ import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import com.kdhuf.projectgutenberglibrary.data.local.BookDatabase
+import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.local.ShelfCachePolicy
 import com.kdhuf.projectgutenberglibrary.data.local.ShelfCache
 import com.kdhuf.projectgutenberglibrary.data.remote.RetrofitInstance
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import com.kdhuf.projectgutenberglibrary.databinding.ActivityMainBinding
+import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallLayoutLogic
+import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallStartupLogic
 import com.kdhuf.projectgutenberglibrary.ui.OverlayTransitionLogic
+import com.kdhuf.projectgutenberglibrary.ui.OverlayAnimationSpec
 import com.kdhuf.projectgutenberglibrary.ui.ReaderUiPalette
 import com.kdhuf.projectgutenberglibrary.ui.ReaderUiPreferences
 import com.kdhuf.projectgutenberglibrary.ui.SearchOptionsFragment
@@ -46,6 +49,7 @@ class MainActivity : AppCompatActivity() {
     private var lastDestinationId: Int? = null
     private var isTransitionOverlayRunning = false
     private var startupOverlayShown = false
+    private var pendingLaunchWallBooks: List<BookEntity>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,22 +58,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         uiPreferences = ReaderUiPreferences(this)
         binding.launchTileWall.setViewportScale(1f)
-        binding.launchTileWall.viewTreeObserver.addOnGlobalLayoutListener(
-            object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    val wall = binding.launchTileWall
-                    if (wall.width <= 0 || wall.height <= 0) return
+        binding.launchTileWall.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
+            val width = right - left
+            val height = bottom - top
+            if (width <= 0 || height <= 0) return@addOnLayoutChangeListener
 
-                    val isLandscape = wall.width > wall.height
-                    if (isLandscape) {
-                        wall.setPreviewWindow(2, 4)
-                    } else {
-                        wall.setPreviewWindow(3, 3)
-                    }
-                    wall.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                }
-            }
-        )
+            val window = LaunchTileWallLayoutLogic.windowForBounds(width, height)
+            binding.launchTileWall.setVisibleWindow(window.visibleRows, window.visibleCols)
+        }
         binding.launchTileWall.setPlaceholderTiles()
 
         val navHostFragment = supportFragmentManager
@@ -160,7 +156,7 @@ class MainActivity : AppCompatActivity() {
 
         val cachedBooks = shelfCache.getTopDownloadedBooks()
         if (cachedBooks.isNotEmpty()) {
-            binding.launchTileWall.setBooks(cachedBooks)
+            updateLaunchWallBooks(cachedBooks)
         }
 
         lifecycleScope.launch {
@@ -177,7 +173,7 @@ class MainActivity : AppCompatActivity() {
             val books = topBooksDeferred.await()
             if (books.isNotEmpty()) {
                 shelfCache.saveTopDownloadedBooks(books)
-                binding.launchTileWall.setBooks(books)
+                updateLaunchWallBooks(books)
             }
         }
     }
@@ -201,7 +197,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun runOverlayAnimation(
-        spec: com.kdhuf.projectgutenberglibrary.ui.OverlayAnimationSpec,
+        spec: OverlayAnimationSpec,
         onFinished: (() -> Unit)? = null
     ) {
         isTransitionOverlayRunning = true
@@ -217,6 +213,10 @@ class MainActivity : AppCompatActivity() {
                 .withEndAction {
                     binding.launchLoadingOverlay.visibility = android.view.View.GONE
                     binding.launchTileWall.pauseAnimation()
+                    pendingLaunchWallBooks?.let { books ->
+                        binding.launchTileWall.setBooks(books)
+                        pendingLaunchWallBooks = null
+                    }
                     isTransitionOverlayRunning = false
                     onFinished?.invoke()
                 }
@@ -241,6 +241,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .start()
+    }
+
+    private fun updateLaunchWallBooks(books: List<BookEntity>) {
+        val update = LaunchTileWallStartupLogic.updateBooks(
+            overlayVisible = binding.launchLoadingOverlay.visibility == android.view.View.VISIBLE,
+            incomingBooks = books
+        )
+        pendingLaunchWallBooks = update.pendingBooks
+        update.visibleBooks?.let(binding.launchTileWall::setBooks)
     }
 
     private fun openUrl(url: String): Boolean {

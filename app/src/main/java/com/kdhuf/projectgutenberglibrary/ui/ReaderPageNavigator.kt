@@ -156,7 +156,7 @@ internal class WebViewReaderPageNavigator(
     }
 
     private fun currentMaxScrollY(): Int {
-        val contentHeightPx = (webView.contentHeight * webView.scale).roundToInt()
+        val contentHeightPx = (webView.contentHeight * webView.resources.displayMetrics.density).roundToInt()
         return (contentHeightPx - webView.height).coerceAtLeast(0)
     }
 
