@@ -1,6 +1,6 @@
 package com.kdhuf.projectgutenberglibrary.ui
 
-import junit.framework.TestCase.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -53,6 +53,30 @@ class OverlayTransitionLogicTest {
                 previousDestinationId = 3,
                 destinationId = 4,
                 isOverlayRunning = false
+            )
+        )
+    }
+
+    @Test
+    fun `shouldShowTransition is false when no previous destination exists`() {
+        assertFalse(
+            OverlayTransitionLogic.shouldShowTransition(
+                startupOverlayShown = true,
+                previousDestinationId = null,
+                destinationId = 4,
+                isOverlayRunning = false
+            )
+        )
+    }
+
+    @Test
+    fun `shouldShowTransition is false while another overlay is already running`() {
+        assertFalse(
+            OverlayTransitionLogic.shouldShowTransition(
+                startupOverlayShown = true,
+                previousDestinationId = 3,
+                destinationId = 4,
+                isOverlayRunning = true
             )
         )
     }

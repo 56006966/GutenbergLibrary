@@ -3,7 +3,6 @@ package com.kdhuf.projectgutenberglibrary
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.text.style.ForegroundColorSpan
-import android.content.Intent
 import android.os.Bundle
 import android.text.SpannableString
 import android.widget.EditText
@@ -12,7 +11,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.core.view.GravityCompat
-import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import com.kdhuf.projectgutenberglibrary.data.local.BookDatabase
@@ -22,6 +20,7 @@ import com.kdhuf.projectgutenberglibrary.data.local.ShelfCache
 import com.kdhuf.projectgutenberglibrary.data.remote.RetrofitInstance
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import com.kdhuf.projectgutenberglibrary.databinding.ActivityMainBinding
+import com.kdhuf.projectgutenberglibrary.ui.ExternalLinkPolicy
 import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallLayoutLogic
 import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallStartupLogic
 import com.kdhuf.projectgutenberglibrary.ui.OverlayTransitionLogic
@@ -50,6 +49,8 @@ class MainActivity : AppCompatActivity() {
     private var isTransitionOverlayRunning = false
     private var startupOverlayShown = false
     private var pendingLaunchWallBooks: List<BookEntity>? = null
+    private var waitingForStartupEnter = true
+    private var drawerAllowedForDestination = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +68,9 @@ class MainActivity : AppCompatActivity() {
             binding.launchTileWall.setVisibleWindow(window.visibleRows, window.visibleCols)
         }
         binding.launchTileWall.setPlaceholderTiles()
+        binding.launchEnterButton.setOnClickListener {
+            dismissStartupOverlay()
+        }
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
@@ -81,15 +85,8 @@ class MainActivity : AppCompatActivity() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             maybeShowTransitionOverlay(destination.id)
-            val showDrawer = destination.id in DRAWER_DESTINATIONS
-            binding.openDrawerButton.visibility = if (showDrawer) android.view.View.VISIBLE else android.view.View.GONE
-            binding.drawerLayout.setDrawerLockMode(
-                if (showDrawer) DrawerLayout.LOCK_MODE_UNLOCKED
-                else DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-            )
-            if (!showDrawer) {
-                binding.drawerLayout.closeDrawer(GravityCompat.START)
-            }
+            drawerAllowedForDestination = destination.id in DRAWER_DESTINATIONS
+            updateDrawerControls()
         }
 
         val header = binding.navView.getHeaderView(0)
@@ -135,6 +132,7 @@ class MainActivity : AppCompatActivity() {
                     navController.navigate(R.id.nav_search_options_screen)
                     true
                 }
+                R.id.nav_about_project_gutenberg -> openUrl("https://gutenberg.org/about/")
                 R.id.nav_about_contact -> openUrl("https://www.gutenberg.org/about/contact_information.html")
                 R.id.nav_about_history -> openUrl("https://www.gutenberg.org/about/background/index.html")
                 R.id.nav_about_ereaders -> openUrl("https://www.gutenberg.org/help/mobile.html")
@@ -151,7 +149,7 @@ class MainActivity : AppCompatActivity() {
         val shelfCache = ShelfCache(this)
         val repository = BookRepository(
             BookDatabase.getDatabase(this).bookDao(),
-            RetrofitInstance.api
+            RetrofitInstance.catalogDataSource
         )
 
         val cachedBooks = shelfCache.getTopDownloadedBooks()
@@ -193,7 +191,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showStartupOverlay() {
-        runOverlayAnimation(OverlayTransitionLogic.startupSpec, onFinished = { startupOverlayShown = true })
+        isTransitionOverlayRunning = true
+        waitingForStartupEnter = true
+        binding.startupLoadingPanel.visibility = android.view.View.VISIBLE
+        binding.navigationLoadingPanel.visibility = android.view.View.GONE
+        binding.launchLoadingOverlay.animate().cancel()
+        binding.launchLoadingOverlay.visibility = android.view.View.VISIBLE
+        binding.launchLoadingOverlay.alpha = 1f
+        binding.launchLoadingOverlay.isClickable = true
+        binding.launchLoadingOverlay.isFocusable = true
+        binding.launchTileWall.resumeAnimation()
+        updateDrawerControls()
+    }
+
+    private fun dismissStartupOverlay() {
+        if (!waitingForStartupEnter) return
+        waitingForStartupEnter = false
+        binding.launchLoadingOverlay.animate().cancel()
+        binding.launchLoadingOverlay.animate()
+            .alpha(0f)
+            .setDuration(320L)
+            .withEndAction {
+                binding.launchLoadingOverlay.visibility = android.view.View.GONE
+                binding.launchTileWall.pauseAnimation()
+                pendingLaunchWallBooks?.let { books ->
+                    binding.launchTileWall.setBooks(books)
+                    pendingLaunchWallBooks = null
+                }
+                startupOverlayShown = true
+                isTransitionOverlayRunning = false
+                updateDrawerControls()
+            }
+            .start()
     }
 
     private fun runOverlayAnimation(
@@ -201,10 +230,14 @@ class MainActivity : AppCompatActivity() {
         onFinished: (() -> Unit)? = null
     ) {
         isTransitionOverlayRunning = true
+        waitingForStartupEnter = false
+        binding.startupLoadingPanel.visibility = android.view.View.GONE
+        binding.navigationLoadingPanel.visibility = android.view.View.VISIBLE
         binding.launchLoadingOverlay.animate().cancel()
         binding.launchLoadingOverlay.visibility = android.view.View.VISIBLE
         binding.launchLoadingOverlay.alpha = if (spec.fadeInDuration == 0L) 1f else 0f
         binding.launchTileWall.resumeAnimation()
+        updateDrawerControls()
 
         val startFadeOut = {
             binding.launchLoadingOverlay.animate()
@@ -218,6 +251,7 @@ class MainActivity : AppCompatActivity() {
                         pendingLaunchWallBooks = null
                     }
                     isTransitionOverlayRunning = false
+                    updateDrawerControls()
                     onFinished?.invoke()
                 }
                 .start()
@@ -252,9 +286,22 @@ class MainActivity : AppCompatActivity() {
         update.visibleBooks?.let(binding.launchTileWall::setBooks)
     }
 
+    private fun updateDrawerControls() {
+        val overlayVisible = binding.launchLoadingOverlay.visibility == android.view.View.VISIBLE
+        val drawerEnabled = drawerAllowedForDestination && !overlayVisible
+        binding.openDrawerButton.visibility =
+            if (drawerEnabled) android.view.View.VISIBLE else android.view.View.GONE
+        binding.drawerLayout.setDrawerLockMode(
+            if (drawerEnabled) DrawerLayout.LOCK_MODE_UNLOCKED
+            else DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+        )
+        if (!drawerEnabled) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+        }
+    }
+
     private fun openUrl(url: String): Boolean {
-        startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-        return true
+        return ExternalLinkPolicy.openWithNotice(this, url)
     }
 
     private fun applyDrawerTheme(

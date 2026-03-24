@@ -1,13 +1,11 @@
 package com.kdhuf.projectgutenberglibrary.ui
 
 import android.util.Log
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.local.ShelfCacheStore
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
-import com.kdhuf.projectgutenberglibrary.util.isNetworkAvailable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -17,7 +15,9 @@ import java.net.UnknownHostException
 class LibraryViewModel(
     private val repository: BookRepository,
     private val shelfCache: ShelfCacheStore,
-    private val networkChecker: () -> Boolean = { isNetworkAvailable(shelfCache.context()) }
+    private val networkChecker: () -> Boolean = {
+        com.kdhuf.projectgutenberglibrary.util.isNetworkAvailable(shelfCache.context())
+    }
 ) : ViewModel() {
 
     companion object {
@@ -66,9 +66,9 @@ class LibraryViewModel(
         }
     }
 
-    fun removeFromLibrary(context: Context, book: BookEntity) {
+    fun removeFromLibrary(book: BookEntity) {
         viewModelScope.launch {
-            repository.removeLocalBook(context, book)
+            repository.removeLocalBook(book)
         }
     }
 
@@ -95,7 +95,7 @@ class LibraryViewModel(
                 val entities = repository.getOfficialPopularBooks(limit = 12)
                 _popularBooks.value = entities
                 shelfCache.savePopularBooks(entities)
-                Log.d(TAG, "Loaded ${entities.size} popular books")
+                debugLog(TAG) { "Loaded ${entities.size} popular books" }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: UnknownHostException) {
@@ -148,7 +148,7 @@ class LibraryViewModel(
                 val entities = repository.getOfficialNewestBooks(limit = 12)
                 _newestBooks.value = entities
                 shelfCache.saveNewestBooks(entities)
-                Log.d(TAG, "Loaded ${entities.size} newest books")
+                debugLog(TAG) { "Loaded ${entities.size} newest books" }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: UnknownHostException) {
@@ -188,14 +188,14 @@ class LibraryViewModel(
         return when (exception) {
             is HttpException -> {
                 if (exception.code() == 503) {
-                    "Gutendex is temporarily unavailable."
+                    "The catalog service is temporarily unavailable."
                 } else {
-                    "Gutendex request failed (${exception.code()})."
+                    "Catalog request failed (${exception.code()})."
                 }
             }
-            is SocketTimeoutException -> "Gutendex took too long to respond."
+            is SocketTimeoutException -> "The catalog service took too long to respond."
             is UnknownHostException -> "Offline. Connect to the internet to load books."
-            else -> exception.message ?: "Unable to load books from Gutendex."
+            else -> exception.message ?: "Unable to load books from the catalog service."
         }
     }
 }

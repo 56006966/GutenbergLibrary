@@ -1,8 +1,10 @@
 package com.kdhuf.projectgutenberglibrary.ui
 
 import android.graphics.Color
+import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
+import android.webkit.WebStorage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -73,14 +75,22 @@ internal class WebViewReaderPageNavigator(
         webView.addJavascriptInterface(WordTapJavascriptBridge { wordIndex ->
             onWordTappedListener?.invoke(wordIndex)
         }, "AndroidReader")
+        CookieManager.getInstance().apply {
+            setAcceptCookie(false)
+            setAcceptThirdPartyCookies(webView, false)
+            removeSessionCookies(null)
+            flush()
+        }
+        WebStorage.getInstance().deleteAllData()
         webView.settings.apply {
             javaScriptEnabled = true
-            domStorageEnabled = true
+            domStorageEnabled = false
             builtInZoomControls = true
             displayZoomControls = false
             this.textZoom = textZoom
             allowFileAccess = false
             allowContentAccess = false
+            databaseEnabled = false
             mediaPlaybackRequiresUserGesture = true
         }
     }

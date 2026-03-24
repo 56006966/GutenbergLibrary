@@ -1,5 +1,28 @@
 # Gutenberg Library
 
+## Mirror-Backed Setup
+
+This app now supports a mirror-backed architecture:
+
+- catalog metadata comes from your own backend
+- EPUB and cover files come from your own Project Gutenberg mirror
+
+Setup guide:
+
+- [Mirror Setup](docs/MIRROR_SETUP.md)
+
+Sample sync scripts:
+
+- [scripts/mirror-sync.sh](scripts/mirror-sync.sh)
+- [scripts/mirror-sync.ps1](scripts/mirror-sync.ps1)
+- [scripts/sync-mirror.ps1](scripts/sync-mirror.ps1)
+- [scripts/sync-mirror.bat](scripts/sync-mirror.bat)
+- [scripts/import-from-local-mirror.ps1](scripts/import-from-local-mirror.ps1)
+- [scripts/import-from-local-mirror.bat](scripts/import-from-local-mirror.bat)
+- [scripts/task-pg-mirror-sync.cmd](scripts/task-pg-mirror-sync.cmd)
+- [scripts/task-pg-catalog-import.cmd](scripts/task-pg-catalog-import.cmd)
+- [scripts/task-pg-catalog-backend.cmd](scripts/task-pg-catalog-backend.cmd)
+
 | Part | Table of Contents |
 | -------- | ------- |
 | I. | [Preliminary Design Review (PDR)](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#i-preliminary-design-review) |

@@ -1,6 +1,7 @@
 package com.kdhuf.projectgutenberglibrary.data.local
 
 import android.content.Context
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -51,7 +52,8 @@ class ShelfCache(context: Context) : ShelfCacheStore {
             .map { book ->
                 book.copy(
                     coverUrl = book.coverUrl?.replace("http://", "https://")
-                        ?: "https://www.gutenberg.org/cache/epub/${book.id}/pg${book.id}.cover.medium.jpg"
+                        ?.let(GutenbergMirror::resolve)
+                        ?: GutenbergMirror.coverUrl(book.id)
                 )
             }
     }

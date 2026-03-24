@@ -1,36 +1,28 @@
 package com.kdhuf.projectgutenberglibrary.data.repository
 
 import android.content.Context
-import android.util.Log
+import com.kdhuf.projectgutenberglibrary.data.catalog.CatalogDataSource
 import com.kdhuf.projectgutenberglibrary.data.local.BookDao
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.remote.BookDto
-import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergApi
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
-import java.io.ByteArrayInputStream
 import java.io.File
 
 open class BookRepository(
     private val dao: BookDao,
-    private val api: GutenbergApi
+    private val catalogDataSource: CatalogDataSource
 ) {
 
     companion object {
-        private const val TAG = "BookRepository"
         private const val PROJECT_GUTENBERG_AUTHOR = "Project Gutenberg"
         private const val CLASSIC_LITERATURE_GENRE = "Classic literature"
-        private const val GUTENBERG_CONTACT_USER_AGENT = "ProjectGutenbergApp/1.0 (+https://example.com/contact)"
-        private const val EPUB_DOWNLOAD_USER_AGENT = "ProjectGutenbergApp"
-        private const val TOP_DOWNLOADS_URL = "https://www.gutenberg.org/browse/scores/top"
-        private const val POPULAR_OPDS_URL = "https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads"
-        private const val NEWEST_RSS_URL = "https://www.gutenberg.org/cache/epub/feeds/today.rss"
+        private const val MIRROR_DOWNLOAD_USER_AGENT = "ProjectGutenbergLibrary/1.0 (+https://example.com/catalog-backend)"
     }
 
     private val okHttpClient = OkHttpClient()
@@ -53,13 +45,14 @@ open class BookRepository(
 
     open suspend fun deleteBookById(id: Int) = dao.deleteBookById(id)
 
-    open suspend fun removeLocalBook(context: Context, book: BookEntity) = withContext(Dispatchers.IO) {
+    open suspend fun removeLocalBook(book: BookEntity) = withContext(Dispatchers.IO) {
         listOfNotNull(book.epubPath, book.coverPath, book.text)
             .map(::File)
             .filter { it.exists() }
             .forEach { file ->
                 runCatching { file.delete() }
-                val pageCache = File(file.parentFile ?: context.cacheDir, "${file.nameWithoutExtension}.v3.pages")
+                val parent = file.parentFile ?: return@forEach
+                val pageCache = File(parent, "${file.nameWithoutExtension}.v10.pages")
                 if (pageCache.exists()) {
                     runCatching { pageCache.delete() }
                 }
@@ -74,14 +67,14 @@ open class BookRepository(
         topic: String? = null,
         sort: String? = null
     ): GutenbergResponse {
-        return api.getBooks(search, topic, sort)
+        return catalogDataSource.getBooks(search, topic, sort)
     }
 
     open suspend fun getPopularBooksPage(nextPageUrl: String? = null): GutenbergResponse {
         return if (nextPageUrl.isNullOrBlank()) {
-            api.getBooks(sort = "popular")
+            catalogDataSource.getBooks(sort = "popular")
         } else {
-            api.getBooksPage(nextPageUrl)
+            catalogDataSource.getBooksPage(nextPageUrl)
         }
     }
 
@@ -92,8 +85,7 @@ open class BookRepository(
             author = dto.authors.joinToString { it.name }.ifBlank { PROJECT_GUTENBERG_AUTHOR },
             genre = dto.subjects?.firstOrNull() ?: CLASSIC_LITERATURE_GENRE,
             downloads = dto.download_count,
-            coverUrl = dto.formats?.get("image/jpeg")?.replace("http://", "https://")
-                ?: buildFallbackCoverUrl(dto.id),
+            coverUrl = GutenbergMirror.resolve(dto.formats?.get("image/jpeg")) ?: GutenbergMirror.coverUrl(dto.id),
             coverPath = null,
             text = null,
             epubPath = null,
@@ -105,88 +97,117 @@ open class BookRepository(
     }
 
     open suspend fun getBookDetails(id: Int): BookDto {
-        return api.getBookDetails(id)
+        return catalogDataSource.getBookDetails(id)
     }
 
     open suspend fun getOfficialNewestBooks(limit: Int = 12): List<BookEntity> = withContext(Dispatchers.IO) {
-        val rssXml = fetchUrl(NEWEST_RSS_URL)
-        parseRssBooks(rssXml, limit)
+        catalogDataSource.getBooks()
+            .results
+            .take(limit)
+            .map(::mapRemoteBookToShelf)
     }
 
     open suspend fun getOfficialPopularBooks(limit: Int = 12): List<BookEntity> = withContext(Dispatchers.IO) {
-        val opdsXml = fetchUrl(POPULAR_OPDS_URL)
-        parseOpdsBooks(opdsXml, limit)
+        catalogDataSource.getBooks(sort = "popular")
+            .results
+            .take(limit)
+            .map(::mapRemoteBookToShelf)
     }
 
     open suspend fun getTopDownloadedBooks(limit: Int = 100): List<BookEntity> = withContext(Dispatchers.IO) {
-        runCatching {
-            val html = fetchHtmlUrl(TOP_DOWNLOADS_URL)
-            parseTopDownloadedBooks(html, limit)
-        }.fold(
-            onSuccess = { books ->
-                if (books.isNotEmpty()) {
-                    books
-                } else {
-                    Log.w(TAG, "Top 100 scores page returned no parsable books; falling back to OPDS")
-                    getOfficialPopularBooks(limit)
-                }
-            },
-            onFailure = { error ->
-                Log.w(TAG, "Top 100 scores page failed; falling back to OPDS", error)
-                getOfficialPopularBooks(limit)
+        val collected = mutableListOf<BookEntity>()
+        var nextPageUrl: String? = null
+
+        while (collected.size < limit) {
+            val response = if (nextPageUrl.isNullOrBlank()) {
+                catalogDataSource.getBooks(sort = "popular")
+            } else {
+                catalogDataSource.getBooksPage(nextPageUrl)
             }
-        )
+
+            val newBooks = response.results
+                .map(::mapRemoteBookToShelf)
+                .filterNot { incoming -> collected.any { existing -> existing.id == incoming.id } }
+
+            collected += newBooks
+            if (response.next.isNullOrBlank()) break
+            nextPageUrl = response.next
+        }
+
+        collected.take(limit)
     }
 
-    // ---------------- TEXT DOWNLOAD ----------------
+    suspend fun updateStatus(id: Int, status: String) {
+        dao.updateStatus(id, status)
+    }
 
     suspend fun downloadBookText(url: String): String =
         withContext(Dispatchers.IO) {
-            try {
-                val request = Request.Builder()
-                    .url(url.replace("http://", "https://"))
-                    .build()
+            val candidates = GutenbergMirror.resolveCandidates(url)
+            var lastError: Exception? = null
 
-                val response = okHttpClient.newCall(request).execute()
-                response.body?.string() ?: ""
-            } catch (e: Exception) {
-                Log.e("Repository", "Text download failed", e)
-                ""
+            for (candidate in candidates) {
+                try {
+                    val request = Request.Builder()
+                        .url(candidate)
+                        .addHeader("User-Agent", MIRROR_DOWNLOAD_USER_AGENT)
+                        .build()
+
+                    okHttpClient.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) {
+                            throw Exception("Text failed: ${response.code}")
+                        }
+                        return@withContext response.body?.string().orEmpty()
+                    }
+                } catch (error: Exception) {
+                    lastError = error
+                }
             }
-        }
 
-    // ---------------- EPUB DOWNLOAD ----------------
+            throw lastError ?: Exception("Text download failed")
+        }
 
     suspend fun downloadEpub(
         context: Context,
         url: String,
         bookId: Int
     ): File = withContext(Dispatchers.IO) {
+        val resolvedUrls = GutenbergMirror.resolveCandidates(url)
+        val file = epubFileFor(context, bookId, resolvedUrls.first())
 
-        val file = epubFileFor(context, bookId, url)
-
-        if (file.exists() && file.length() > 10000) {
+        if (file.exists() && file.length() > 10_000) {
             return@withContext file
         }
 
-        val request = Request.Builder()
-            .url(url.replace("http://", "https://"))
-            .addHeader("User-Agent", EPUB_DOWNLOAD_USER_AGENT)
-            .build()
+        var lastError: Exception? = null
+        for (resolvedUrl in resolvedUrls) {
+            try {
+                val request = Request.Builder()
+                    .url(resolvedUrl)
+                    .addHeader("User-Agent", MIRROR_DOWNLOAD_USER_AGENT)
+                    .build()
 
-        okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw Exception("EPUB failed: ${response.code}")
-            }
+                okHttpClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw Exception("EPUB failed: ${response.code}")
+                    }
 
-            response.body?.byteStream()?.use { input ->
-                file.outputStream().use { output ->
-                    input.copyTo(output)
+                    response.body?.byteStream()?.use { input ->
+                        file.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
                 }
+
+                if (file.exists() && file.length() > 10_000) {
+                    return@withContext file
+                }
+            } catch (error: Exception) {
+                lastError = error
             }
         }
 
-        file
+        throw lastError ?: Exception("EPUB download failed")
     }
 
     suspend fun downloadCover(
@@ -197,221 +218,37 @@ open class BookRepository(
         runCatching {
             val file = File(context.filesDir, "book_${bookId}_cover.jpg")
 
-            if (file.exists() && file.length() > 2048) {
+            if (file.exists() && file.length() > 2_048) {
                 return@withContext file
             }
 
-            val request = Request.Builder()
-                .url(url.replace("http://", "https://"))
-                .addHeader("User-Agent", EPUB_DOWNLOAD_USER_AGENT)
-                .build()
+            for (candidate in GutenbergMirror.resolveCandidates(url)) {
+                try {
+                    val request = Request.Builder()
+                        .url(candidate)
+                        .addHeader("User-Agent", MIRROR_DOWNLOAD_USER_AGENT)
+                        .build()
 
-            okHttpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@use
+                    okHttpClient.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) return@use
 
-                response.body?.byteStream()?.use { input ->
-                    file.outputStream().use { output ->
-                        input.copyTo(output)
+                        response.body?.byteStream()?.use { input ->
+                            file.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
                     }
+
+                    if (file.exists() && file.length() > 2_048) {
+                        return@withContext file
+                    }
+                } catch (_: Exception) {
+                    // Try the next official mirror candidate.
                 }
             }
 
-            file.takeIf { it.exists() && it.length() > 2048 }
+            file.takeIf { it.exists() && it.length() > 2_048 }
         }.getOrNull()
-    }
-
-    suspend fun updateStatus(id: Int, status: String) {
-        dao.updateStatus(id, status)
-    }
-    suspend fun getOrDownloadEpub(
-        context: Context,
-        book: BookDto
-    ): File = withContext(Dispatchers.IO) {
-
-        val epubUrl = selectPreferredEpubUrl(book.formats)
-            ?: throw Exception("EPUB not available")
-
-        val file = epubFileFor(context, book.id, epubUrl)
-
-        if (file.exists() && file.length() > 10000) {
-            return@withContext file
-        }
-
-        return@withContext downloadEpub(context, epubUrl, book.id)
-    }
-
-    private fun fetchUrl(url: String): String {
-        val request = Request.Builder()
-            .url(url.replace("http://", "https://"))
-            .addHeader("User-Agent", GUTENBERG_CONTACT_USER_AGENT)
-            .addHeader("Accept", "application/atom+xml, application/rss+xml, application/xml, text/xml")
-            .build()
-
-        okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw Exception("Feed request failed: ${response.code}")
-            }
-            return response.body?.string().orEmpty()
-        }
-    }
-
-    private fun fetchHtmlUrl(url: String): String {
-        val request = Request.Builder()
-            .url(url.replace("http://", "https://"))
-            .addHeader("User-Agent", GUTENBERG_CONTACT_USER_AGENT)
-            .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            .build()
-
-        okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw Exception("Top 100 request failed: ${response.code}")
-            }
-            return response.body?.string().orEmpty()
-        }
-    }
-
-    private fun parseRssBooks(xml: String, limit: Int): List<BookEntity> {
-        val parser = newParser(xml)
-        val books = mutableListOf<BookEntity>()
-        var insideItem = false
-        var title: String? = null
-        var link: String? = null
-
-        while (parser.eventType != XmlPullParser.END_DOCUMENT && books.size < limit) {
-            when (parser.eventType) {
-                XmlPullParser.START_TAG -> when (parser.name) {
-                    "item" -> {
-                        insideItem = true
-                        title = null
-                        link = null
-                    }
-                    "title" -> if (insideItem) title = parser.nextText()
-                    "link" -> if (insideItem) link = parser.nextText()
-                }
-                XmlPullParser.END_TAG -> if (parser.name == "item" && insideItem) {
-                    val id = extractBookId(link)
-                    if (id != null && !title.isNullOrBlank()) {
-                        books += buildShelfBook(
-                            id = id,
-                            rawTitle = title!!,
-                            downloads = limit - books.size
-                        )
-                    }
-                    insideItem = false
-                }
-            }
-            parser.next()
-        }
-
-        return books
-    }
-
-    private fun parseOpdsBooks(xml: String, limit: Int): List<BookEntity> {
-        val parser = newParser(xml)
-        val books = mutableListOf<BookEntity>()
-        var insideEntry = false
-        var id: Int? = null
-        var title: String? = null
-        val authors = mutableListOf<String>()
-
-        while (parser.eventType != XmlPullParser.END_DOCUMENT && books.size < limit) {
-            when (parser.eventType) {
-                XmlPullParser.START_TAG -> when (parser.name) {
-                    "entry" -> {
-                        insideEntry = true
-                        id = null
-                        title = null
-                        authors.clear()
-                    }
-                    "id" -> if (insideEntry) id = extractBookId(parser.nextText())
-                    "title" -> if (insideEntry) title = parser.nextText()
-                    "name" -> if (insideEntry) authors += parser.nextText()
-                }
-                XmlPullParser.END_TAG -> if (parser.name == "entry" && insideEntry) {
-                    if (id != null && !title.isNullOrBlank()) {
-                        books += BookEntity(
-                            id = id!!,
-                            title = title!!.trim(),
-                            author = authors.joinToString().ifBlank { PROJECT_GUTENBERG_AUTHOR },
-                            genre = CLASSIC_LITERATURE_GENRE,
-                            downloads = limit - books.size,
-                            coverUrl = buildFallbackCoverUrl(id!!),
-                            coverPath = null,
-                            text = null,
-                            epubPath = null,
-                            downloadedAt = 0L,
-                            isFavorite = false,
-                            lastPageIndex = 0,
-                            status = BookEntity.STATUS_TO_READ
-                        )
-                    }
-                    insideEntry = false
-                }
-            }
-            parser.next()
-        }
-
-        return books
-    }
-
-    private fun buildShelfBook(id: Int, rawTitle: String, downloads: Int): BookEntity {
-        val parts = rawTitle.split(" by ", limit = 2)
-        val parsedTitle = parts.firstOrNull().orEmpty().trim().ifBlank { "Untitled" }
-        val parsedAuthor = parts.getOrNull(1)?.trim().orEmpty().ifBlank { PROJECT_GUTENBERG_AUTHOR }
-        return BookEntity(
-            id = id,
-            title = parsedTitle,
-            author = parsedAuthor,
-            genre = CLASSIC_LITERATURE_GENRE,
-            downloads = downloads,
-            coverUrl = buildFallbackCoverUrl(id),
-            coverPath = null,
-            text = null,
-            epubPath = null,
-            downloadedAt = 0L,
-            isFavorite = false,
-            lastPageIndex = 0,
-            status = BookEntity.STATUS_TO_READ
-        )
-    }
-
-    private fun buildFallbackCoverUrl(bookId: Int): String {
-        return "https://www.gutenberg.org/cache/epub/$bookId/pg$bookId.cover.medium.jpg"
-    }
-
-    private fun parseTopDownloadedBooks(html: String, limit: Int): List<BookEntity> {
-        val sectionMatch = Regex(
-            """Top\s*100\s*EBooks\s*yesterday.*?<ol[^>]*>(.*?)</ol>""",
-            setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
-        ).find(html)
-
-        val orderedListBlock = sectionMatch?.groupValues?.getOrNull(1).orEmpty()
-        if (orderedListBlock.isBlank()) return emptyList()
-
-        val itemPattern = Regex(
-            """<li[^>]*>\s*<a[^>]+href="/ebooks/(\d+)"[^>]*>(.*?)</a>\s*\(([\d,]+)\)\s*</li>""",
-            setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
-        )
-
-        return itemPattern.findAll(orderedListBlock)
-            .take(limit)
-            .mapIndexedNotNull { index, match ->
-                val id = match.groupValues[1].toIntOrNull() ?: return@mapIndexedNotNull null
-                val rawTitle = decodeHtml(match.groupValues[2]).replace(Regex("\\s+"), " ").trim()
-                val downloads = match.groupValues[3].replace(",", "").toIntOrNull() ?: (limit - index)
-                buildShelfBook(id = id, rawTitle = rawTitle, downloads = downloads)
-            }
-            .toList()
-    }
-
-    private fun decodeHtml(value: String): String {
-        return value
-            .replace("&amp;", "&")
-            .replace("&quot;", "\"")
-            .replace("&#39;", "'")
-            .replace("&apos;", "'")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
     }
 
     fun selectPreferredEpubUrl(formats: Map<String, String>?): String? {
@@ -420,6 +257,7 @@ open class BookRepository(
             ?.filter { entry -> entry.key.startsWith("application/epub+zip") }
             ?.maxByOrNull { entry -> scoreEpubCandidate(entry.key, entry.value) }
             ?.value
+            ?.let(GutenbergMirror::resolve)
     }
 
     private fun scoreEpubCandidate(formatKey: String, formatUrl: String): Int {
@@ -447,19 +285,5 @@ open class BookRepository(
             else -> ""
         }
         return File(context.filesDir, "book_${bookId}${suffix}.epub")
-    }
-
-    private fun extractBookId(value: String?): Int? {
-        val text = value ?: return null
-        return Regex("/ebooks/(\\d+)").find(text)?.groupValues?.get(1)?.toIntOrNull()
-            ?: Regex("(\\d+)$").find(text)?.groupValues?.get(1)?.toIntOrNull()
-    }
-
-    private fun newParser(xml: String): XmlPullParser {
-        val factory = XmlPullParserFactory.newInstance()
-        factory.isNamespaceAware = true
-        return factory.newPullParser().apply {
-            setInput(ByteArrayInputStream(xml.toByteArray()), "UTF-8")
-        }
     }
 }

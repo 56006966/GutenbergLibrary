@@ -50,7 +50,7 @@ class FrequentlyDownloadedFragment : Fragment() {
         shelfCache = ShelfCache(requireContext())
         repository = BookRepository(
             BookDatabase.getDatabase(requireContext()).bookDao(),
-            RetrofitInstance.api
+            RetrofitInstance.catalogDataSource
         )
         setupRecyclerView()
         applyTheme()
@@ -59,8 +59,7 @@ class FrequentlyDownloadedFragment : Fragment() {
         } else if (shelfCache.hasTopDownloadedBooks()) {
             viewModel.loadedBooks.clear()
             viewModel.loadedBooks += shelfCache.getTopDownloadedBooks()
-            viewModel.nextPopularPageUrl =
-                FrequentlyDownloadedPaging.buildNextPopularPageUrl(viewModel.loadedBooks.size)
+            viewModel.nextPopularPageUrl = null
             viewModel.isInitialLoadComplete = true
             showLoadedState()
             if (!shelfCache.isTopDownloadedCacheFresh(ShelfCachePolicy.TOP_DOWNLOADED_MAX_AGE_MS)) {
@@ -110,14 +109,17 @@ class FrequentlyDownloadedFragment : Fragment() {
         binding.frequentlyDownloadedEmptyText.visibility = View.GONE
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching { repository.getTopDownloadedBooks(limit = FrequentlyDownloadedPaging.InitialTopDownloadLimit) }
+            runCatching { repository.getPopularBooksPage() }
                 .onSuccess { books ->
-                    Log.d("FrequentlyDownloaded", "Loaded ${books.size} books for frequently downloaded")
+                    val shelfBooks = books.results
+                        .map(repository::mapRemoteBookToShelf)
+                        .take(FrequentlyDownloadedPaging.InitialTopDownloadLimit)
+                    Log.d("FrequentlyDownloaded", "Loaded ${shelfBooks.size} books for frequently downloaded")
                     binding.frequentlyDownloadedLoadingText.visibility = View.GONE
                     viewModel.loadedBooks.clear()
-                    viewModel.loadedBooks += books
-                    shelfCache.saveTopDownloadedBooks(books)
-                    viewModel.nextPopularPageUrl = FrequentlyDownloadedPaging.buildNextPopularPageUrl(viewModel.loadedBooks.size)
+                    viewModel.loadedBooks += shelfBooks
+                    shelfCache.saveTopDownloadedBooks(shelfBooks)
+                    viewModel.nextPopularPageUrl = books.next
                     viewModel.isInitialLoadComplete = true
                     showLoadedState()
                 }

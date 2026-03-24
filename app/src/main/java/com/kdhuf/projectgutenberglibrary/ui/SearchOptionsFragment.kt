@@ -23,6 +23,7 @@ import com.kdhuf.projectgutenberglibrary.R
 import com.kdhuf.projectgutenberglibrary.data.local.BookDatabase
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.remote.BookDto
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.remote.RetrofitInstance
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import kotlinx.coroutines.Dispatchers
@@ -106,7 +107,7 @@ class SearchOptionsFragment : Fragment(R.layout.fragment_search_options) {
             lifecycleScope.launch {
                 val repository = BookRepository(
                     BookDatabase.getDatabase(requireContext()).bookDao(),
-                    RetrofitInstance.api
+                    RetrofitInstance.catalogDataSource
                 )
                 val result = runCatching {
                     withContext(Dispatchers.IO) {
@@ -232,8 +233,7 @@ class SearchOptionsFragment : Fragment(R.layout.fragment_search_options) {
             author = authors.joinToString { it.name },
             genre = subjects?.firstOrNull() ?: "Unknown",
             downloads = download_count,
-            coverUrl = formats?.get("image/jpeg")?.replace("http://", "https://")
-                ?: "https://www.gutenberg.org/cache/epub/$id/pg$id.cover.medium.jpg",
+            coverUrl = GutenbergMirror.resolve(formats?.get("image/jpeg")) ?: GutenbergMirror.coverUrl(id),
             coverPath = null,
             text = null,
             epubPath = null,

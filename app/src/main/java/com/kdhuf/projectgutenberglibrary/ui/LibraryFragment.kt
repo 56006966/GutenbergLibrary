@@ -67,6 +67,9 @@ class LibraryFragment : Fragment() {
         setupShelf(binding.newestRecyclerView, newestAdapter)
         setupShelf(binding.popularRecyclerView, popularAdapter)
         setupShelf(binding.libraryRecyclerView, libraryAdapter)
+        newestAdapter.setPresentationMode(BookAdapter.PresentationMode.HOME_SHELF)
+        popularAdapter.setPresentationMode(BookAdapter.PresentationMode.HOME_SHELF)
+        libraryAdapter.setPresentationMode(BookAdapter.PresentationMode.HOME_SHELF)
 
         val openBook: (BookEntity) -> Unit = { book ->
             val action = LibraryFragmentDirections
@@ -83,12 +86,15 @@ class LibraryFragment : Fragment() {
         recyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         recyclerView.adapter = adapter
-        recyclerView.addItemDecoration(HorizontalSpaceItemDecoration(12))
+        recyclerView.clipToPadding = false
+        recyclerView.clipChildren = false
+        recyclerView.itemAnimator = null
+        recyclerView.addItemDecoration(HorizontalSpaceItemDecoration(0))
     }
 
     private fun setupViewModel() {
         val dao = BookDatabase.getDatabase(requireContext()).bookDao()
-        val repository = BookRepository(dao, RetrofitInstance.api)
+        val repository = BookRepository(dao, RetrofitInstance.catalogDataSource)
         val shelfCache = ShelfCache(requireContext())
 
         viewModel = androidx.lifecycle.ViewModelProvider(

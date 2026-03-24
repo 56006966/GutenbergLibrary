@@ -1,11 +1,11 @@
 package com.kdhuf.projectgutenberglibrary.ui
 
 import android.content.Context
+import com.kdhuf.projectgutenberglibrary.data.catalog.CatalogDataSource
 import com.kdhuf.projectgutenberglibrary.data.local.BookDao
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.local.ShelfCacheStore
 import com.kdhuf.projectgutenberglibrary.data.remote.BookDto
-import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergApi
 import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergResponse
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import junit.framework.TestCase.assertEquals
@@ -18,7 +18,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import okhttp3.ResponseBody
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -190,7 +189,7 @@ class LibraryViewModelTest {
         private val libraryBooks: List<BookEntity> = emptyList()
     ) : BookRepository(
         dao = FakeBookDao(),
-        api = FakeGutenbergApi()
+        catalogDataSource = FakeCatalogDataSource()
     ) {
         var popularRequested = false
         var newestRequested = false
@@ -264,7 +263,7 @@ class LibraryViewModelTest {
         override fun getAllBooksFlow(): Flow<List<BookEntity>> = flowOf(emptyList())
     }
 
-    private class FakeGutenbergApi : GutenbergApi {
+    private class FakeCatalogDataSource : CatalogDataSource {
         override suspend fun getBooks(
             search: String?,
             topic: String?,
@@ -275,6 +274,5 @@ class LibraryViewModelTest {
 
         override suspend fun getBookDetails(id: Int): BookDto = error("Not needed for this test")
 
-        override suspend fun getBookText(textUrl: String): ResponseBody = error("Not needed for this test")
     }
 }

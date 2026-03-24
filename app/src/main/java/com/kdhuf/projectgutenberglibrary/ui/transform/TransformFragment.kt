@@ -13,6 +13,7 @@ import coil.load
 import com.kdhuf.projectgutenberglibrary.R
 import com.kdhuf.projectgutenberglibrary.data.local.BookDatabase
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import com.kdhuf.projectgutenberglibrary.databinding.FragmentTransformBinding
 import com.kdhuf.projectgutenberglibrary.databinding.ItemTransformBinding
@@ -51,7 +52,7 @@ class TransformFragment : Fragment() {
 
         val repository = BookRepository(
             dao,
-            RetrofitInstance.api
+            RetrofitInstance.catalogDataSource
         )
 
         viewModel = ViewModelProvider(
@@ -116,7 +117,11 @@ class TransformFragment : Fragment() {
         fun bind(book: BookEntity) {
             binding.textViewItemTransform.text = book.title
 
-            binding.imageViewItemTransform.load(book.coverUrl) {
+            binding.imageViewItemTransform.load(
+                book.coverPath?.takeIf { it.isNotBlank() }
+                    ?: book.coverUrl
+                    ?: GutenbergMirror.coverUrl(book.id)
+            ) {
                 crossfade(true)
                 placeholder(R.drawable.book_placeholder)
                 error(R.drawable.book_placeholder)

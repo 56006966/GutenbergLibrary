@@ -73,7 +73,7 @@ class MyLibraryFragment : Fragment() {
 
     private fun setupViewModel() {
         val dao = BookDatabase.getDatabase(requireContext()).bookDao()
-        val repository = BookRepository(dao, RetrofitInstance.api)
+        val repository = BookRepository(dao, RetrofitInstance.catalogDataSource)
         val shelfCache = ShelfCache(requireContext())
 
         viewModel = androidx.lifecycle.ViewModelProvider(
@@ -110,7 +110,7 @@ class MyLibraryFragment : Fragment() {
         recyclerView.addOnScrollListener(MyLibraryCarouselScrollListener())
         libraryAdapter.setLibraryActionsEnabled(true)
         libraryAdapter.setPresentationMode(BookAdapter.PresentationMode.CAROUSEL)
-        libraryAdapter.setInfiniteCarouselEnabled(true)
+        libraryAdapter.setInfiniteCarouselEnabled(false)
         recyclerView.doOnLayout {
             snapToCenteredCover()
             applyCarouselTransforms()
@@ -120,7 +120,7 @@ class MyLibraryFragment : Fragment() {
             findNavController().navigate(action)
         }
         libraryAdapter.onFavoriteClick = { book -> viewModel.toggleFavorite(book) }
-        libraryAdapter.onRemoveClick = { book -> viewModel.removeFromLibrary(requireContext(), book) }
+        libraryAdapter.onRemoveClick = { book -> viewModel.removeFromLibrary(book) }
     }
 
     private fun applyTheme() {

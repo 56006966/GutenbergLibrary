@@ -43,17 +43,17 @@ class ReaderTtsController(
         val tts = textToSpeech
         if (tts == null) {
             pendingInitStatus = status
-            Log.d(logTag, "Received TTS init callback before engine reference was stored; deferring setup")
+            debugLog(logTag) { "Received TTS init callback before engine reference was stored; deferring setup" }
             return
         }
         pendingInitStatus = null
-        Log.d(logTag, "onInit status=$status")
+        debugLog(logTag) { "onInit status=$status" }
         completeInitialization(tts, status)
     }
 
     fun ensureInitialized() {
         if (textToSpeech != null) return
-        Log.d(logTag, "Creating TextToSpeech instance")
+        debugLog(logTag) { "Creating TextToSpeech instance" }
         updateState(state.copy(isReady = false, isUnavailable = false, availableVoices = emptyList()))
         val createdTts = TextToSpeech(appContext, this)
         textToSpeech = createdTts
@@ -71,7 +71,7 @@ class ReaderTtsController(
         val tts = textToSpeech ?: return false
         tts.stop()
         val result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
-        Log.d(logTag, "speak utteranceId=$utteranceId result=$result textLength=${text.length}")
+        debugLog(logTag) { "speak utteranceId=$utteranceId result=$result textLength=${text.length}" }
         if (result == TextToSpeech.ERROR) {
             markUnavailableAndRelease("speak returned ERROR")
             return false
@@ -87,7 +87,7 @@ class ReaderTtsController(
     }
 
     fun release() {
-        Log.d(logTag, "Releasing TextToSpeech instance")
+        debugLog(logTag) { "Releasing TextToSpeech instance" }
         textToSpeech?.stop()
         textToSpeech?.shutdown()
         textToSpeech = null
@@ -108,11 +108,10 @@ class ReaderTtsController(
             .orEmpty()
         val localVoices = allVoices.filter { voice -> !voice.isNetworkConnectionRequired }
 
-        Log.d(
-            logTag,
+        debugLog(logTag) {
             "Init languageResult=$defaultLanguageResult defaultLocale=${Locale.getDefault()} " +
                 "defaultVoice=${defaultVoice?.name} localVoiceCount=${localVoices.size} totalVoiceCount=${allVoices.size}"
-        )
+        }
 
         val selectableVoices = if (localVoices.isNotEmpty()) localVoices else allVoices
 
@@ -132,10 +131,9 @@ class ReaderTtsController(
                 if (voice.name != preferredVoiceName) {
                     onPreferredVoiceSelected(voice.name)
                 }
-                Log.d(
-                    logTag,
+                debugLog(logTag) {
                     "Selected voice=${voice.name} locale=${voice.locale} networkRequired=${voice.isNetworkConnectionRequired}"
-                )
+                }
             } catch (exception: Exception) {
                 Log.w(logTag, "Failed to apply selected voice ${voice.name}", exception)
             }

@@ -15,6 +15,15 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        val gutenbergMirrorBaseUrl = (project.findProperty("gutenbergMirrorBaseUrl") as String?)
+            ?: "https://aleph.pglaf.org/"
+        val catalogApiBaseUrl = (project.findProperty("catalogApiBaseUrl") as String?)
+            ?: "http://10.0.2.2:8080/"
+        val catalogApiUserAgent = (project.findProperty("catalogApiUserAgent") as String?)
+            ?: "ProjectGutenbergLibrary/1.0 (+https://example.com/catalog-backend)"
+        buildConfigField("String", "GUTENBERG_MIRROR_BASE_URL", "\"$gutenbergMirrorBaseUrl\"")
+        buildConfigField("String", "CATALOG_API_BASE_URL", "\"$catalogApiBaseUrl\"")
+        buildConfigField("String", "CATALOG_API_USER_AGENT", "\"$catalogApiUserAgent\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,6 +45,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
         dataBinding = true
     }
@@ -83,6 +93,7 @@ dependencies {
 
     // Coil for images
     implementation(libs.coil)
+    implementation(libs.androidx.palette)
 
     // Coroutines
     implementation(libs.coroutines)

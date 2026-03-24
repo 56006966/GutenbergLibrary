@@ -1,5 +1,7 @@
 package com.kdhuf.projectgutenberglibrary.data.remote
 
+import com.kdhuf.projectgutenberglibrary.BuildConfig
+import com.kdhuf.projectgutenberglibrary.data.catalog.RemoteCatalogDataSource
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
@@ -7,8 +9,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
-
-    private const val BASE_URL = "https://gutendex.com/"
 
     val client = OkHttpClient.Builder()
         .retryOnConnectionFailure(false)
@@ -19,7 +19,7 @@ object RetrofitInstance {
         .addInterceptor { chain ->
             val request: Request = chain.request()
                 .newBuilder()
-                .header("User-Agent", "ProjectGutenberg/1.0 (Android)")
+                .header("User-Agent", BuildConfig.CATALOG_API_USER_AGENT)
                 .header("Accept", "application/json")
                 .build()
             chain.proceed(request)
@@ -28,13 +28,17 @@ object RetrofitInstance {
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.CATALOG_API_BASE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    val api: GutenbergApi by lazy {
-        retrofit.create(GutenbergApi::class.java)
+    private val api: CatalogBackendApi by lazy {
+        retrofit.create(CatalogBackendApi::class.java)
+    }
+
+    val catalogDataSource: RemoteCatalogDataSource by lazy {
+        RemoteCatalogDataSource(api)
     }
 }

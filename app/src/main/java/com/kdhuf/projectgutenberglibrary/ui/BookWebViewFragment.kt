@@ -36,6 +36,7 @@ import com.kdhuf.projectgutenberglibrary.R
 import com.kdhuf.projectgutenberglibrary.data.local.BookDatabase
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.remote.BookDto
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.remote.RetrofitInstance
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import com.kdhuf.projectgutenberglibrary.databinding.FragmentBookWebviewBinding
@@ -105,7 +106,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         super.onViewCreated(view, savedInstanceState)
 
         val dao = BookDatabase.getDatabase(requireContext()).bookDao()
-        repository = BookRepository(dao, RetrofitInstance.api)
+        repository = BookRepository(dao, RetrofitInstance.catalogDataSource)
         uiPreferences = ReaderUiPreferences(requireContext())
         ttsController = ReaderTtsController(
             context = requireContext(),
@@ -280,13 +281,9 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
     }
 
     private fun loadBook() {
-        binding.progressBar.visibility = View.VISIBLE
+        binding.progressBar.visibility = View.GONE
         binding.errorText.visibility = View.GONE
-        binding.statusText.visibility = View.VISIBLE
-        binding.statusText.text = getString(
-            if (restoredFromInstanceState) R.string.book_reorienting_status
-            else R.string.book_opening_status
-        )
+        binding.statusText.visibility = View.GONE
 
         viewLifecycleOwner.lifecycleScope.launch {
             val localBook = withContext(Dispatchers.IO) { repository.getLocalBook(args.bookId) }
@@ -335,7 +332,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
 
                     if (epubUrl != null) {
                         prepareOpeningCover(
-                            remoteBook.formats?.get("image/jpeg")?.replace("http://", "https://")
+                            GutenbergMirror.resolve(remoteBook.formats?.get("image/jpeg"))
                                 ?: buildFallbackCoverUrl(args.bookId)
                         )
                         val epubFile = withContext(Dispatchers.IO) {
@@ -1148,7 +1145,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         withContext(Dispatchers.IO) {
             val existing = repository.getLocalBook(args.bookId)
             val coverUrl = existing?.coverUrl
-                ?: remoteBook?.formats?.get("image/jpeg")?.replace("http://", "https://")
+                ?: GutenbergMirror.resolve(remoteBook?.formats?.get("image/jpeg"))
                 ?: buildFallbackCoverUrl(args.bookId)
             val coverPath = existing?.coverPath
                 ?: repository.downloadCover(requireContext(), coverUrl, args.bookId)?.absolutePath
@@ -1182,11 +1179,11 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
     }
 
     private fun buildFallbackEpubUrl(bookId: Int): String {
-        return "https://www.gutenberg.org/cache/epub/$bookId/pg$bookId-images.epub"
+        return GutenbergMirror.imagesEpubUrl(bookId)
     }
 
     private fun buildFallbackCoverUrl(bookId: Int): String {
-        return "https://www.gutenberg.org/cache/epub/$bookId/pg$bookId.cover.medium.jpg"
+        return GutenbergMirror.coverUrl(bookId)
     }
 
     private fun isLegacyGenericEpub(epubFile: File): Boolean {
@@ -1465,10 +1462,18 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
             placeholder(android.R.drawable.ic_menu_report_image)
             error(android.R.drawable.ic_menu_report_image)
         }
-        binding.openingCoverImage.visibility = View.VISIBLE
-        binding.openingCoverImage.alpha = 0f
-        binding.openingCoverImage.scaleX = 0.94f
-        binding.openingCoverImage.scaleY = 0.94f
+        openingAnimationViews().forEach { view ->
+            view.visibility = View.VISIBLE
+            view.alpha = 1f
+            view.translationX = 0f
+            view.translationY = 0f
+            view.rotationY = 0f
+            view.scaleX = 0.96f
+            view.scaleY = 0.96f
+            view.cameraDistance = binding.pageSurface.width.coerceAtLeast(1) * 24f
+            view.pivotX = 0f
+            view.pivotY = view.height / 2f
+        }
     }
 
     private fun playOpeningCoverAnimationIfNeeded() {
@@ -1479,34 +1484,92 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
 
         hasPlayedOpeningAnimation = true
         binding.webView.alpha = 0f
-        binding.openingCoverImage.visibility = View.VISIBLE
-        binding.openingCoverImage.pivotX = 0f
-        binding.openingCoverImage.pivotY = binding.openingCoverImage.height / 2f
-        binding.openingCoverImage.cameraDistance =
-            binding.pageSurface.width.coerceAtLeast(1) * 24f
+        binding.webView.scaleX = 1.08f
+        binding.webView.scaleY = 1.08f
+        val animationViews = openingAnimationViews()
+        animationViews.forEach { view ->
+            view.visibility = View.VISIBLE
+            view.pivotX = 0f
+            view.pivotY = view.height / 2f
+            view.cameraDistance = binding.pageSurface.width.coerceAtLeast(1) * 24f
+            view.animate().cancel()
+        }
 
         binding.openingCoverImage.animate()
-            .alpha(1f)
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(220L)
+            .scaleX(1.04f)
+            .scaleY(1.04f)
+            .setDuration(180L)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction {
-                binding.openingCoverImage.animate()
-                    .rotationY(96f)
-                    .alpha(0.4f)
-                    .setDuration(280L)
+                val pageAnimations = listOf(
+                    binding.openingPage1 to -150f,
+                    binding.openingPage2 to -30f,
+                    binding.openingPage3 to -140f,
+                    binding.openingPage4 to -40f,
+                    binding.openingPage5 to -130f,
+                    binding.openingPage6 to -50f
+                )
+                binding.openingBackCover.animate()
+                    .rotationY(-20f)
+                    .scaleX(1.06f)
+                    .scaleY(1.06f)
+                    .setDuration(620L)
                     .setInterpolator(AccelerateDecelerateInterpolator())
+                    .start()
+                pageAnimations.forEachIndexed { index, (page, rotation) ->
+                    page.animate()
+                        .rotationY(rotation)
+                        .scaleX(1.08f)
+                        .scaleY(1.08f)
+                        .setStartDelay((index * 18).toLong())
+                        .setDuration(620L)
+                        .setInterpolator(AccelerateDecelerateInterpolator())
+                        .start()
+                }
+                binding.openingCoverImage.animate()
+                    .rotationY(-160f)
+                    .scaleX(1.1f)
+                    .scaleY(1.1f)
+                    .alpha(0.18f)
+                    .setDuration(620L)
+                    .setInterpolator(AccelerateDecelerateInterpolator())
+                    .withStartAction {
+                        binding.webView.animate()
+                            .alpha(1f)
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setStartDelay(250L)
+                            .setDuration(360L)
+                            .setInterpolator(DecelerateInterpolator())
+                            .start()
+                    }
                     .withEndAction {
-                        binding.openingCoverImage.visibility = View.GONE
-                        binding.openingCoverImage.rotationY = 0f
-                        binding.openingCoverImage.alpha = 1f
-                        binding.webView.animate().alpha(1f).setDuration(140L).start()
+                        animationViews.forEach { view ->
+                            view.visibility = View.GONE
+                            view.rotationY = 0f
+                            view.alpha = 1f
+                            view.scaleX = 1f
+                            view.scaleY = 1f
+                        }
+                        binding.webView.alpha = 1f
+                        binding.webView.scaleX = 1f
+                        binding.webView.scaleY = 1f
                     }
                     .start()
             }
             .start()
     }
+
+    private fun openingAnimationViews(): List<View> = listOf(
+        binding.openingBackCover,
+        binding.openingPage6,
+        binding.openingPage5,
+        binding.openingPage4,
+        binding.openingPage3,
+        binding.openingPage2,
+        binding.openingPage1,
+        binding.openingCoverImage
+    )
 
     private fun replaceImageSources(
         body: String,

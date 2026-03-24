@@ -2,15 +2,21 @@ package com.kdhuf.projectgutenberglibrary.ui
 
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.toColorInt
+import androidx.palette.graphics.Palette
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import coil.load
 import com.kdhuf.projectgutenberglibrary.R
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.databinding.ItemBookBinding
 import com.kdhuf.projectgutenberglibrary.util.isNetworkAvailable
 
@@ -28,11 +34,13 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
 
     companion object {
         private const val VIRTUAL_CAROUSEL_LOOPS = 10_000
+        private const val HOME_SHELF_MAX_HEIGHT_DP = 188
     }
 
     enum class PresentationMode {
         STANDARD,
-        CAROUSEL
+        CAROUSEL,
+        HOME_SHELF
     }
 
     var onBookClick: ((BookEntity) -> Unit)? = null
@@ -42,6 +50,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
     private var libraryActionsEnabled = false
     private var presentationMode = PresentationMode.STANDARD
     private var infiniteCarouselEnabled = false
+    private val homeShelfSpineColors = mutableMapOf<Int, Int>()
 
     init {
         setHasStableIds(true)
@@ -112,20 +121,26 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
     ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root) {
 
         fun bind(book: BookEntity) {
-            applyPresentationLayout()
             binding.bookTitle.text = book.title
             binding.bookOverlayTitle.text = book.title
-            applyCardTheme()
+            binding.bookSpineTitle.text = book.title
+            applyPresentationLayout(book)
+            applyCardTheme(book)
             loadCover(book)
             bindActions(book)
-            resetCarouselOverlay()
+            resetInteractiveOverlay()
+            bindHomeShelfInteraction(book)
 
             binding.root.setOnClickListener {
-                onBookClick?.invoke(book)
+                if (presentationMode == PresentationMode.HOME_SHELF) {
+                    playHomeShelfOpeningAnimation(book)
+                } else {
+                    onBookClick?.invoke(book)
+                }
             }
         }
 
-        private fun applyPresentationLayout() {
+        private fun applyPresentationLayout(book: BookEntity) {
             val density = binding.root.resources.displayMetrics.density
             val parentView = binding.root.parent as? View
             val parentWidth = parentView?.width ?: 0
@@ -140,8 +155,12 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
+            val cardMarginLayoutParams =
+                cardLayoutParams as? ViewGroup.MarginLayoutParams
+                    ?: ViewGroup.MarginLayoutParams(cardLayoutParams)
             val coverLayoutParams = binding.bookCover.layoutParams
             val titleLayoutParams = binding.bookTitle.layoutParams
+            val coverContainerLayoutParams = binding.bookCoverContainer.layoutParams
 
             if (presentationMode == PresentationMode.CAROUSEL) {
                 val maxCoverHeight = when {
@@ -159,40 +178,75 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 coverLayoutParams.width = resolvedCoverWidth
                 coverLayoutParams.height = (coverLayoutParams.width * 1.56f).toInt()
                 titleLayoutParams.width = coverLayoutParams.width
-                binding.bookCoverContainer.layoutParams = binding.bookCoverContainer.layoutParams.apply {
-                    width = coverLayoutParams.width
-                    height = coverLayoutParams.height
-                }
+                coverContainerLayoutParams.width = coverLayoutParams.width
+                coverContainerLayoutParams.height = coverLayoutParams.height
                 binding.bookTitle.visibility = View.GONE
+                binding.bookSpine.visibility = View.GONE
                 binding.root.radius = 22f * density
                 binding.root.cardElevation = 10f * density
                 binding.bookCover.scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
                 binding.bookCover.setBackgroundColor(
                     Color.parseColor(if (darkModeEnabled) "#161616" else "#F2EEE7")
                 )
+            } else if (presentationMode == PresentationMode.HOME_SHELF) {
+                val spineMetrics = homeShelfMetrics(bookTitle = book.title, density = density)
+                val spineWidth = spineMetrics.widthPx
+                val coverHeight = spineMetrics.heightPx
+                val maxHeightPx = (HOME_SHELF_MAX_HEIGHT_DP * density).toInt()
+
+                cardMarginLayoutParams.width = spineWidth
+                cardMarginLayoutParams.height = coverHeight
+                cardMarginLayoutParams.topMargin = (maxHeightPx - coverHeight).coerceAtLeast(0)
+                cardMarginLayoutParams.bottomMargin = 0
+                coverLayoutParams.width = spineWidth
+                coverLayoutParams.height = coverHeight
+                titleLayoutParams.width = spineWidth
+                coverContainerLayoutParams.width = spineWidth
+                coverContainerLayoutParams.height = coverHeight
+                binding.bookSpine.layoutParams = binding.bookSpine.layoutParams.apply {
+                    width = spineWidth
+                    height = coverHeight
+                }
+                binding.bookSpineTitle.layoutParams = binding.bookSpineTitle.layoutParams.apply {
+                    width = (spineWidth - (8 * density).toInt()).coerceAtLeast((40 * density).toInt())
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+                binding.bookTitle.visibility = View.GONE
+                binding.bookSpine.visibility = View.VISIBLE
+                binding.root.radius = 0f
+                binding.root.cardElevation = 0f
+                binding.root.strokeWidth = 0
+                binding.root.setCardBackgroundColor(Color.TRANSPARENT)
+                binding.bookCover.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                binding.bookCover.setBackgroundResource(R.drawable.book_placeholder)
+                binding.root.translationZ = 0f
             } else {
-                cardLayoutParams.width = (132 * density).toInt()
+                cardMarginLayoutParams.width = (132 * density).toInt()
+                cardMarginLayoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                cardMarginLayoutParams.topMargin = 0
+                cardMarginLayoutParams.bottomMargin = 0
                 coverLayoutParams.width = (120 * density).toInt()
                 coverLayoutParams.height = (180 * density).toInt()
                 titleLayoutParams.width = (120 * density).toInt()
-                binding.bookCoverContainer.layoutParams = binding.bookCoverContainer.layoutParams.apply {
-                    width = coverLayoutParams.width
-                    height = coverLayoutParams.height
-                }
+                coverContainerLayoutParams.width = coverLayoutParams.width
+                coverContainerLayoutParams.height = coverLayoutParams.height
                 binding.bookTitle.visibility = View.VISIBLE
+                binding.bookSpine.visibility = View.GONE
                 binding.bookTitle.textSize = 12f
                 binding.root.radius = 16f * density
                 binding.root.cardElevation = 6f * density
+                binding.root.strokeWidth = 0
                 binding.bookCover.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
                 binding.bookCover.setBackgroundResource(R.drawable.book_placeholder)
             }
 
-            binding.root.layoutParams = cardLayoutParams
+            binding.root.layoutParams = cardMarginLayoutParams
             binding.bookCover.layoutParams = coverLayoutParams
+            binding.bookCoverContainer.layoutParams = coverContainerLayoutParams
             binding.bookTitle.layoutParams = titleLayoutParams
         }
 
-        private fun applyCardTheme() {
+        private fun applyCardTheme(book: BookEntity) {
             val cardBackground = Color.parseColor(
                 if (darkModeEnabled) ReaderUiPalette.DARK_SURFACE else ReaderUiPalette.LIGHT_SURFACE
             )
@@ -200,9 +254,17 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 if (darkModeEnabled) ReaderUiPalette.DARK_TEXT else ReaderUiPalette.LIGHT_TEXT
             )
             val coverActionColor = Color.WHITE
+            val spineColor = homeShelfSpineColors[book.id]
+                ?: defaultHomeShelfSpineColor(book)
 
-            binding.root.setCardBackgroundColor(cardBackground)
+            if (presentationMode != PresentationMode.HOME_SHELF) {
+                binding.root.setCardBackgroundColor(cardBackground)
+            }
             binding.bookTitle.setTextColor(titleColor)
+            binding.bookSpineTitle.setTextColor(bestTextColorForBackground(spineColor))
+            (binding.bookSpine.background.mutate() as? GradientDrawable)?.apply {
+                colors = intArrayOf(lightenColor(spineColor, 0.18f), spineColor, darkenColor(spineColor, 0.18f))
+            }
             binding.favoriteButton.setColorFilter(coverActionColor)
             binding.removeButton.setColorFilter(coverActionColor)
         }
@@ -230,16 +292,128 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 if (!libraryActionsEnabled && book.isFavorite) android.view.View.VISIBLE else android.view.View.GONE
         }
 
-        private fun resetCarouselOverlay() {
+        private fun resetInteractiveOverlay() {
             if (presentationMode == PresentationMode.CAROUSEL) return
             binding.bookCoverOverlay.alpha = 0f
             binding.bookHoverInfo.alpha = 0f
         }
 
+        private fun bindHomeShelfInteraction(book: BookEntity) {
+            if (presentationMode != PresentationMode.HOME_SHELF) {
+                binding.root.setOnHoverListener(null)
+                binding.root.setOnFocusChangeListener(null)
+                binding.root.setOnTouchListener(null)
+                binding.root.scaleX = 1f
+                binding.root.scaleY = 1f
+                binding.root.translationY = 0f
+                binding.root.translationX = 0f
+                binding.root.rotation = 0f
+                binding.root.rotationX = 0f
+                binding.root.rotationY = 0f
+                binding.bookCover.alpha = 1f
+                binding.bookCover.translationX = 0f
+                binding.bookSpine.alpha = 0f
+                binding.bookSpine.translationX = 0f
+                binding.bookPageEdge.alpha = 0f
+                binding.bookBackCover.alpha = 0f
+                resetHomeShelfPages()
+                return
+            }
+
+            applyHomeShelfState(highlight = false, animate = false)
+
+            binding.root.setOnHoverListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_HOVER_ENTER -> applyHomeShelfState(highlight = true, animate = true)
+                    MotionEvent.ACTION_HOVER_EXIT -> applyHomeShelfState(highlight = false, animate = true)
+                }
+                false
+            }
+            binding.root.setOnFocusChangeListener { _, hasFocus ->
+                applyHomeShelfState(highlight = hasFocus, animate = true)
+            }
+            binding.root.setOnTouchListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> applyHomeShelfState(highlight = true, animate = true)
+                    MotionEvent.ACTION_UP,
+                    MotionEvent.ACTION_CANCEL -> applyHomeShelfState(highlight = false, animate = true)
+                }
+                false
+            }
+        }
+
+        private fun applyHomeShelfState(highlight: Boolean, animate: Boolean) {
+            val duration = if (animate) 220L else 0L
+            val density = binding.root.resources.displayMetrics.density
+            val lift = if (highlight) -(2f * density) else 0f
+            val scale = if (highlight) 1.015f else 1f
+
+            binding.root.animate().cancel()
+            binding.bookCover.animate().cancel()
+            binding.bookSpine.animate().cancel()
+            binding.bookPageEdge.animate().cancel()
+            binding.bookBackCover.animate().cancel()
+            homeShelfPageViews().forEach { it.animate().cancel() }
+
+            binding.root.animate()
+                .translationY(lift)
+                .translationX(0f)
+                .scaleX(scale)
+                .scaleY(scale)
+                .rotation(0f)
+                .setDuration(duration)
+                .start()
+            binding.bookCover.animate()
+                .alpha(0f)
+                .translationX(0f)
+                .translationY(0f)
+                .setDuration(duration)
+                .start()
+            binding.bookSpine.animate()
+                .alpha(1f)
+                .translationX(0f)
+                .rotation(0f)
+                .translationZ(0f)
+                .setDuration(duration)
+                .start()
+            binding.bookPageEdge.animate()
+                .alpha(0f)
+                .translationX(0f)
+                .translationY(0f)
+                .setDuration(duration)
+                .start()
+            binding.bookBackCover.animate()
+                .alpha(0f)
+                .translationX(0f)
+                .translationY(0f)
+                .setDuration(duration)
+                .start()
+            applyHomeShelfPageSpread(animate = animate)
+        }
+
+        private fun playHomeShelfOpeningAnimation(book: BookEntity) {
+            binding.root.animate().cancel()
+            binding.root.animate()
+                .scaleX(1.06f)
+                .scaleY(1.06f)
+                .setDuration(90L)
+                .withEndAction {
+                    binding.root.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(80L)
+                        .start()
+                }
+                .start()
+            binding.root.postDelayed({
+                onBookClick?.invoke(book)
+            }, 110L)
+        }
+
         private fun loadCover(book: BookEntity) {
             val localCover = book.coverPath
             val primaryCover = localCover ?: book.coverUrl
-            val fallbackCover = "https://www.gutenberg.org/cache/epub/${book.id}/pg${book.id}.cover.medium.jpg"
+            val fallbackCover = GutenbergMirror.coverUrl(book.id)
             val networkAvailable = isNetworkAvailable(binding.root.context)
 
             if (!shouldLoadRemoteCover(localCover, primaryCover, networkAvailable)) {
@@ -248,6 +422,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                     placeholder(android.R.drawable.ic_menu_report_image)
                     error(android.R.drawable.ic_menu_report_image)
                 }
+                updateHomeShelfSpineColor(book.id, defaultHomeShelfSpineColor(book))
                 return
             }
 
@@ -256,6 +431,11 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                     crossfade(false)
                     placeholder(android.R.drawable.ic_menu_report_image)
                     error(android.R.drawable.ic_menu_report_image)
+                    listener(
+                        onSuccess = { _, result ->
+                            updatePaletteFromDrawable(book, result.drawable)
+                        }
+                    )
                 }
                 return
             }
@@ -265,6 +445,9 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 placeholder(android.R.drawable.ic_menu_report_image)
                 error(android.R.drawable.ic_menu_report_image)
                 listener(
+                    onSuccess = { _, result ->
+                        updatePaletteFromDrawable(book, result.drawable)
+                    },
                     onError = { _, result ->
                         Log.w("BookAdapter", "Primary cover failed for ${book.id}: ${result.throwable.message}")
                         if (localCover == null && primaryCover != fallbackCover) {
@@ -272,14 +455,141 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                                 crossfade(false)
                                 placeholder(android.R.drawable.ic_menu_report_image)
                                 error(android.R.drawable.ic_menu_report_image)
+                                listener(
+                                    onSuccess = { _, fallbackResult ->
+                                        updatePaletteFromDrawable(book, fallbackResult.drawable)
+                                    }
+                                )
                             }
+                        } else {
+                            updateHomeShelfSpineColor(book.id, defaultHomeShelfSpineColor(book))
                         }
                     }
                 )
             }
         }
+
+        private fun homeShelfMetrics(bookTitle: String, density: Float): HomeShelfLayoutMetrics {
+            val metrics = HomeShelfInteractionLogic.metricsForTitle(bookTitle)
+            return HomeShelfLayoutMetrics(
+                widthDp = metrics.widthDp,
+                heightDp = metrics.heightDp,
+                widthPx = (metrics.widthDp * density).toInt(),
+                heightPx = (metrics.heightDp * density).toInt()
+            )
+        }
+
+        private fun updatePaletteFromDrawable(book: BookEntity, drawable: android.graphics.drawable.Drawable) {
+            if (presentationMode != PresentationMode.HOME_SHELF) return
+            runCatching {
+                val bitmap = drawable.toBitmap(width = 48, height = 72, config = android.graphics.Bitmap.Config.ARGB_8888)
+                val palette = Palette.from(bitmap).clearFilters().generate()
+                val color = palette.getDominantColor(defaultHomeShelfSpineColor(book))
+                updateHomeShelfSpineColor(book.id, darkenColor(color, 0.15f))
+            }.onFailure {
+                updateHomeShelfSpineColor(book.id, defaultHomeShelfSpineColor(book))
+            }
+        }
+
+        private fun updateHomeShelfSpineColor(bookId: Int, color: Int) {
+            if (homeShelfSpineColors[bookId] == color) return
+            homeShelfSpineColors[bookId] = color
+            if (presentationMode == PresentationMode.HOME_SHELF && bindingAdapterPosition != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
+                applyCardTheme(getBookForPosition(bindingAdapterPosition))
+            }
+        }
+
+        private fun defaultHomeShelfSpineColor(book: BookEntity): Int {
+            val fallback = listOf("#7A3324", "#254E70", "#5B3A29", "#314F38", "#6C2940", "#4E3F69")
+            return fallback[book.id.mod(fallback.size)].toColorInt()
+        }
+
+        private fun bestTextColorForBackground(backgroundColor: Int): Int {
+            val darkness = (0.299 * Color.red(backgroundColor) +
+                0.587 * Color.green(backgroundColor) +
+                0.114 * Color.blue(backgroundColor)) / 255
+            return if (darkness > 0.62f) "#1E130C".toColorInt() else "#F6EBDD".toColorInt()
+        }
+
+        private fun lightenColor(color: Int, amount: Float): Int {
+            val r = Color.red(color)
+            val g = Color.green(color)
+            val b = Color.blue(color)
+            return Color.rgb(
+                (r + ((255 - r) * amount)).toInt().coerceIn(0, 255),
+                (g + ((255 - g) * amount)).toInt().coerceIn(0, 255),
+                (b + ((255 - b) * amount)).toInt().coerceIn(0, 255)
+            )
+        }
+
+        private fun darkenColor(color: Int, amount: Float): Int {
+            return Color.rgb(
+                (Color.red(color) * (1f - amount)).toInt().coerceIn(0, 255),
+                (Color.green(color) * (1f - amount)).toInt().coerceIn(0, 255),
+                (Color.blue(color) * (1f - amount)).toInt().coerceIn(0, 255)
+            )
+        }
+
+        private fun applyHomeShelfPageSpread(animate: Boolean) {
+            val duration = if (animate) 220L else 0L
+            val alpha = 0f
+            homeShelfPageViews().forEachIndexed { index, pageView ->
+                pageView.pivotX = 0f
+                pageView.pivotY = pageView.height / 2f
+                pageView.animate()
+                    .alpha(alpha)
+                    .translationX(index.toFloat())
+                    .translationY(0f)
+                    .rotationY(0f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(duration)
+                    .start()
+            }
+            binding.bookCover.rotationY = 0f
+            binding.bookCover.scaleX = 1f
+            binding.bookCover.scaleY = 1f
+            binding.bookBackCover.rotationY = 0f
+        }
+
+        private fun resetHomeShelfPages() {
+            binding.bookBackCover.translationX = 0f
+            binding.bookBackCover.translationY = 0f
+            binding.bookBackCover.rotationY = 0f
+            binding.bookBackCover.scaleX = 1f
+            binding.bookBackCover.scaleY = 1f
+            binding.bookCover.translationY = 0f
+            binding.bookCover.rotationY = 0f
+            binding.bookCover.scaleX = 1f
+            binding.bookCover.scaleY = 1f
+            binding.bookPageEdge.translationY = 0f
+            homeShelfPageViews().forEach { pageView ->
+                pageView.alpha = 0f
+                pageView.translationX = 0f
+                pageView.translationY = 0f
+                pageView.rotationY = 0f
+                pageView.scaleX = 1f
+                pageView.scaleY = 1f
+            }
+        }
+
+        private fun homeShelfPageViews(): List<View> = listOf(
+            binding.bookPage1,
+            binding.bookPage2,
+            binding.bookPage3,
+            binding.bookPage4,
+            binding.bookPage5,
+            binding.bookPage6
+        )
     }
 }
+
+private data class HomeShelfLayoutMetrics(
+    val widthDp: Int,
+    val heightDp: Int,
+    val widthPx: Int,
+    val heightPx: Int
+)
 
 private class BookDiffCallback : DiffUtil.ItemCallback<BookEntity>() {
     override fun areItemsTheSame(oldItem: BookEntity, newItem: BookEntity): Boolean {

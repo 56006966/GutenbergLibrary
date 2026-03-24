@@ -13,6 +13,9 @@
         android:title="@string/menu_about">
         <menu>
             <item
+                android:id="@+id/nav_about_project_gutenberg"
+                android:title="@string/menu_about_project_gutenberg" />
+            <item
                 android:id="@+id/nav_about_contact"
                 android:title="@string/menu_contact_us" />
             <item

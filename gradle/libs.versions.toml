@@ -17,6 +17,7 @@ room = "2.7.0-alpha13"
 coil = "2.4.0"
 coroutines = "1.7.3"
 recyclerviewVersion = "1.4.0"
+palette = "1.0.0"
 
 [libraries]
 # Core Android
@@ -47,6 +48,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 # Misc
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+androidx-palette = { group = "androidx.palette", name = "palette-ktx", version.ref = "palette" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

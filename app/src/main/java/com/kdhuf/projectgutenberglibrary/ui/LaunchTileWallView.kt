@@ -16,6 +16,7 @@ import androidx.annotation.VisibleForTesting
 import coil.load
 import com.kdhuf.projectgutenberglibrary.R
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import kotlin.math.roundToInt
 
 class LaunchTileWallView @JvmOverloads constructor(
@@ -385,10 +386,6 @@ class LaunchTileWallView @JvmOverloads constructor(
         return card
     }
 
-    private fun buildCoverUrl(bookId: Int): String {
-        return "https://www.gutenberg.org/cache/epub/$bookId/pg$bookId.cover.medium.jpg"
-    }
-
     private fun stopAnimation() {
         if (scrollFrameCallback != null) {
             debugLog { "stopAnimation offset=$scrollOffsetPx" }
@@ -505,7 +502,7 @@ class LaunchTileWallView @JvmOverloads constructor(
                 author = PLACEHOLDER_AUTHOR,
                 genre = PLACEHOLDER_AUTHOR,
                 downloads = 0,
-                coverUrl = buildCoverUrl(bookId),
+                coverUrl = GutenbergMirror.coverUrl(bookId),
                 coverPath = null,
                 text = null,
                 epubPath = null,
