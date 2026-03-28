@@ -194,8 +194,10 @@ Last Steps (OPTIONAL):
 
 ## IX. Data Access Layer
 
-
+Catalog API Code:
 ![Catalog API](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendApi.kt.png "Catalog API")
+
+Catalog Server Code:
 ![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer1.png "Catalog Server")
 ![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer2.png "Catalog Server")
 ![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer3.png "Catalog Server")
