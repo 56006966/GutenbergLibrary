@@ -8,47 +8,30 @@ import java.io.File
 class BookLoadingDecisionsTest {
 
     @Test
-    fun `saved epub is always preferred when it exists`() {
-        val savedEpub = File("book_1342_images.epub")
-
-        assertTrue(shouldOpenSavedEpub(savedEpub))
+    fun `opens saved epub when present`() {
+        assertTrue(shouldOpenSavedEpub(File("saved.epub")))
     }
 
     @Test
-    fun `missing saved epub falls back to remote source`() {
+    fun `does not open saved epub when missing`() {
         assertFalse(shouldOpenSavedEpub(null))
     }
 
     @Test
-    fun `remote cover is skipped when offline and no local cover exists`() {
-        assertFalse(
-            shouldLoadRemoteCover(
-                localCover = null,
-                primaryCover = "https://www.gutenberg.org/cover.jpg",
-                networkAvailable = false
-            )
-        )
+    fun `retries saved epub only when it was not already attempted`() {
+        val saved = File("saved.epub")
+
+        assertTrue(shouldRetrySavedEpubFallback(saved, attemptedSavedEpub = false))
+        assertFalse(shouldRetrySavedEpubFallback(saved, attemptedSavedEpub = true))
     }
 
     @Test
-    fun `local cover is still allowed when offline`() {
-        assertTrue(
-            shouldLoadRemoteCover(
-                localCover = "/data/user/0/com.kdhuf.projectgutenberglibrary/files/book_1_cover.jpg",
-                primaryCover = "/data/user/0/com.kdhuf.projectgutenberglibrary/files/book_1_cover.jpg",
-                networkAvailable = false
-            )
-        )
+    fun `does not retry saved epub fallback when no saved file exists`() {
+        assertFalse(shouldRetrySavedEpubFallback(null, attemptedSavedEpub = false))
     }
 
     @Test
-    fun `fallback remote cover can load when network is available`() {
-        assertTrue(
-            shouldLoadRemoteCover(
-                localCover = null,
-                primaryCover = null,
-                networkAvailable = true
-            )
-        )
+    fun `does not retry saved epub fallback after saved file was already attempted`() {
+        assertFalse(shouldRetrySavedEpubFallback(File("saved.epub"), attemptedSavedEpub = true))
     }
 }

@@ -288,6 +288,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         viewLifecycleOwner.lifecycleScope.launch {
             val localBook = withContext(Dispatchers.IO) { repository.getLocalBook(args.bookId) }
             val savedEpub = localBook?.epubPath?.let(::File)?.takeIf { it.exists() && it.length() > 10000 }
+            val attemptedSavedEpub = shouldOpenSavedEpub(savedEpub)
             Log.d(
                 "BookWebViewFragment",
                 "Initial load decision for ${args.bookId}: hasLocalBook=${localBook != null}, hasSavedEpub=${savedEpub != null}, restored=$restoredFromInstanceState"
@@ -318,9 +319,13 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
                 saveToLibrary(epubFile)
                 showEpub(epubFile)
             } catch (directEpubError: Exception) {
-                if (savedEpub != null) {
-                    Log.d("BookWebViewFragment", "Falling back to saved EPUB for ${args.bookId} from ${savedEpub.absolutePath}")
-                    showEpub(savedEpub)
+                if (attemptedSavedEpub && savedEpub != null) {
+                    invalidateSavedEpub(savedEpub)
+                }
+                if (shouldRetrySavedEpubFallback(savedEpub, attemptedSavedEpub)) {
+                    val fallbackSavedEpub = checkNotNull(savedEpub)
+                    Log.d("BookWebViewFragment", "Falling back to saved EPUB for ${args.bookId} from ${fallbackSavedEpub.absolutePath}")
+                    showEpub(fallbackSavedEpub)
                     return@launch
                 }
                 try {
@@ -441,8 +446,13 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
             )
         }
 
-        val epubBook = FileInputStream(epubFile).use { input ->
-            EpubReader().readEpub(input)
+        val epubBook = try {
+            FileInputStream(epubFile).use { input ->
+                EpubReader().readEpub(input)
+            }
+        } catch (exception: Exception) {
+            clearCachedEpubArtifacts(epubFile)
+            throw exception
         }
         val tocHints = extractTocHints(epubBook)
 
@@ -1476,6 +1486,16 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         }
     }
 
+    private fun invalidateSavedEpub(epubFile: File) {
+        clearCachedEpubArtifacts(epubFile)
+        runCatching { epubFile.delete() }
+    }
+
+    private fun clearCachedEpubArtifacts(epubFile: File) {
+        runCatching { pageCacheFileFor(epubFile).delete() }
+        runCatching { tocHintCacheFileFor(epubFile).delete() }
+    }
+
     private fun playOpeningCoverAnimationIfNeeded() {
         if (hasPlayedOpeningAnimation || binding.openingCoverImage.drawable == null) {
             binding.webView.alpha = 1f
@@ -2132,3 +2152,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
 }
 
 internal fun shouldOpenSavedEpub(savedEpub: File?): Boolean = savedEpub != null
+
+internal fun shouldRetrySavedEpubFallback(savedEpub: File?, attemptedSavedEpub: Boolean): Boolean {
+    return savedEpub != null && !attemptedSavedEpub
+}

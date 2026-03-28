@@ -120,6 +120,7 @@ class LaunchTileWallView @JvmOverloads constructor(
         val newRows = visibleRows.coerceIn(2, 6)
         val newCols = visibleCols.coerceIn(2, 6)
         val changed = fixedVisibleRows != newRows || fixedVisibleCols != newCols || !useUniformGrid
+        val expectedGravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
 
         fixedVisibleRows = newRows
         fixedVisibleCols = newCols
@@ -128,11 +129,18 @@ class LaunchTileWallView @JvmOverloads constructor(
         perspectiveStage.rotation = 0f
         perspectiveStage.translationX = 0f
         perspectiveStage.translationY = 0f
-        perspectiveStage.layoutParams = LayoutParams(
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT,
-            Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        )
+        val currentParams = perspectiveStage.layoutParams as? LayoutParams
+        val needsLayoutParamsUpdate = currentParams == null ||
+            currentParams.width != LayoutParams.WRAP_CONTENT ||
+            currentParams.height != LayoutParams.WRAP_CONTENT ||
+            currentParams.gravity != expectedGravity
+        if (needsLayoutParamsUpdate) {
+            perspectiveStage.layoutParams = LayoutParams(
+                LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT,
+                expectedGravity
+            )
+        }
         debugLog { "setVisibleWindow rows=$fixedVisibleRows cols=$fixedVisibleCols" }
         if (changed && isAttachedToWindow && isActuallyVisible()) {
             rebuildWall()
@@ -398,6 +406,13 @@ class LaunchTileWallView @JvmOverloads constructor(
     private fun applyViewportBounds() {
         val scaledWidth = if (width > 0) (width * viewportScale).roundToInt() else LayoutParams.MATCH_PARENT
         val scaledHeight = if (height > 0) (height * viewportScale).roundToInt() else LayoutParams.MATCH_PARENT
+        val currentParams = viewport.layoutParams as? LayoutParams
+        val needsUpdate = currentParams == null ||
+            currentParams.width != scaledWidth ||
+            currentParams.height != scaledHeight ||
+            currentParams.gravity != Gravity.CENTER
+        if (!needsUpdate) return
+
         viewport.layoutParams = LayoutParams(
             scaledWidth,
             scaledHeight,
@@ -406,7 +421,6 @@ class LaunchTileWallView @JvmOverloads constructor(
         debugLog {
             "applyViewportBounds host=${width}x${height} viewport=${scaledWidth}x${scaledHeight} scale=$viewportScale"
         }
-        viewport.requestLayout()
     }
 
     private fun computeRowCount(): Int {

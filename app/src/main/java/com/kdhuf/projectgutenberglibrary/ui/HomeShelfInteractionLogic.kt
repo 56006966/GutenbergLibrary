@@ -11,7 +11,6 @@ internal data class HomeShelfInteractionState(
 )
 
 internal enum class HomeShelfTapAction {
-    REVEAL_COVER,
     START_OPENING_ANIMATION
 }
 
@@ -27,22 +26,14 @@ internal object HomeShelfInteractionLogic {
         state: HomeShelfInteractionState,
         bookId: Int
     ): HomeShelfTapResult {
-        return if (state.expandedBookId == bookId) {
-            HomeShelfTapResult(
-                action = HomeShelfTapAction.START_OPENING_ANIMATION,
-                previousExpandedBookId = state.expandedBookId,
-                state = state.copy(openingBookId = bookId)
+        return HomeShelfTapResult(
+            action = HomeShelfTapAction.START_OPENING_ANIMATION,
+            previousExpandedBookId = state.expandedBookId,
+            state = HomeShelfInteractionState(
+                expandedBookId = bookId,
+                openingBookId = bookId
             )
-        } else {
-            HomeShelfTapResult(
-                action = HomeShelfTapAction.REVEAL_COVER,
-                previousExpandedBookId = state.expandedBookId,
-                state = HomeShelfInteractionState(
-                    expandedBookId = bookId,
-                    openingBookId = null
-                )
-            )
-        }
+        )
     }
 
     fun onOpeningAnimationFinished(state: HomeShelfInteractionState): HomeShelfInteractionState {

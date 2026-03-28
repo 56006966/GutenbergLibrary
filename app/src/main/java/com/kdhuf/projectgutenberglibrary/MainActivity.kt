@@ -51,6 +51,8 @@ class MainActivity : AppCompatActivity() {
     private var pendingLaunchWallBooks: List<BookEntity>? = null
     private var waitingForStartupEnter = true
     private var drawerAllowedForDestination = false
+    private var lastLaunchWallWidth = 0
+    private var lastLaunchWallHeight = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,13 +61,32 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         uiPreferences = ReaderUiPreferences(this)
         binding.launchTileWall.setViewportScale(1f)
+        val initialWallWindow = LaunchTileWallLayoutLogic.windowForBounds(
+            resources.displayMetrics.widthPixels,
+            resources.displayMetrics.heightPixels
+        )
+        binding.launchTileWall.setVisibleWindow(
+            initialWallWindow.visibleRows,
+            initialWallWindow.visibleCols
+        )
         binding.launchTileWall.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
             val width = right - left
             val height = bottom - top
             if (width <= 0 || height <= 0) return@addOnLayoutChangeListener
+            if (lastLaunchWallWidth == width && lastLaunchWallHeight == height) {
+                return@addOnLayoutChangeListener
+            }
+
+            lastLaunchWallWidth = width
+            lastLaunchWallHeight = height
 
             val window = LaunchTileWallLayoutLogic.windowForBounds(width, height)
-            binding.launchTileWall.setVisibleWindow(window.visibleRows, window.visibleCols)
+            binding.launchTileWall.post {
+                if (binding.launchTileWall.width != width || binding.launchTileWall.height != height) {
+                    return@post
+                }
+                binding.launchTileWall.setVisibleWindow(window.visibleRows, window.visibleCols)
+            }
         }
         binding.launchTileWall.setPlaceholderTiles()
         binding.launchEnterButton.setOnClickListener {

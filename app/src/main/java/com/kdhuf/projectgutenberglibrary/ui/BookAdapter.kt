@@ -51,6 +51,8 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
     private var presentationMode = PresentationMode.STANDARD
     private var infiniteCarouselEnabled = false
     private val homeShelfSpineColors = mutableMapOf<Int, Int>()
+    private val pendingPaletteBookIds = mutableSetOf<Int>()
+    private var homeShelfState = HomeShelfInteractionState()
 
     init {
         setHasStableIds(true)
@@ -133,7 +135,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
 
             binding.root.setOnClickListener {
                 if (presentationMode == PresentationMode.HOME_SHELF) {
-                    playHomeShelfOpeningAnimation(book)
+                    handleHomeShelfTap(book)
                 } else {
                     onBookClick?.invoke(book)
                 }
@@ -161,6 +163,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
             val coverLayoutParams = binding.bookCover.layoutParams
             val titleLayoutParams = binding.bookTitle.layoutParams
             val coverContainerLayoutParams = binding.bookCoverContainer.layoutParams
+            val expanded = homeShelfState.expandedBookId == book.id
 
             if (presentationMode == PresentationMode.CAROUSEL) {
                 val maxCoverHeight = when {
@@ -174,7 +177,10 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                     .coerceAtLeast((150 * density).toInt())
                 val resolvedCarouselWidth = (resolvedCoverWidth / 0.9f).toInt()
 
-                cardLayoutParams.width = resolvedCarouselWidth
+                cardMarginLayoutParams.width = resolvedCarouselWidth
+                cardMarginLayoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                cardMarginLayoutParams.topMargin = 0
+                cardMarginLayoutParams.bottomMargin = 0
                 coverLayoutParams.width = resolvedCoverWidth
                 coverLayoutParams.height = (coverLayoutParams.width * 1.56f).toInt()
                 titleLayoutParams.width = coverLayoutParams.width
@@ -191,6 +197,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
             } else if (presentationMode == PresentationMode.HOME_SHELF) {
                 val spineMetrics = homeShelfMetrics(bookTitle = book.title, density = density)
                 val spineWidth = spineMetrics.widthPx
+                val coverWidth = (118 * density).toInt()
                 val coverHeight = spineMetrics.heightPx
                 val maxHeightPx = (HOME_SHELF_MAX_HEIGHT_DP * density).toInt()
 
@@ -198,19 +205,17 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 cardMarginLayoutParams.height = coverHeight
                 cardMarginLayoutParams.topMargin = (maxHeightPx - coverHeight).coerceAtLeast(0)
                 cardMarginLayoutParams.bottomMargin = 0
-                coverLayoutParams.width = spineWidth
+                coverLayoutParams.width = coverWidth
                 coverLayoutParams.height = coverHeight
                 titleLayoutParams.width = spineWidth
                 coverContainerLayoutParams.width = spineWidth
                 coverContainerLayoutParams.height = coverHeight
-                binding.bookSpine.layoutParams = binding.bookSpine.layoutParams.apply {
-                    width = spineWidth
-                    height = coverHeight
-                }
-                binding.bookSpineTitle.layoutParams = binding.bookSpineTitle.layoutParams.apply {
-                    width = (spineWidth - (8 * density).toInt()).coerceAtLeast((40 * density).toInt())
-                    height = ViewGroup.LayoutParams.WRAP_CONTENT
-                }
+                updateLayoutSize(binding.bookSpine, spineWidth, coverHeight)
+                updateLayoutSize(
+                    binding.bookSpineTitle,
+                    (spineWidth - (8 * density).toInt()).coerceAtLeast((40 * density).toInt()),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 binding.bookTitle.visibility = View.GONE
                 binding.bookSpine.visibility = View.VISIBLE
                 binding.root.radius = 0f
@@ -219,7 +224,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 binding.root.setCardBackgroundColor(Color.TRANSPARENT)
                 binding.bookCover.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
                 binding.bookCover.setBackgroundResource(R.drawable.book_placeholder)
-                binding.root.translationZ = 0f
+                binding.root.translationZ = if (expanded) 24f * density else 0f
             } else {
                 cardMarginLayoutParams.width = (132 * density).toInt()
                 cardMarginLayoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -240,10 +245,10 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 binding.bookCover.setBackgroundResource(R.drawable.book_placeholder)
             }
 
-            binding.root.layoutParams = cardMarginLayoutParams
-            binding.bookCover.layoutParams = coverLayoutParams
-            binding.bookCoverContainer.layoutParams = coverContainerLayoutParams
-            binding.bookTitle.layoutParams = titleLayoutParams
+            updateLayoutParams(binding.root, cardMarginLayoutParams)
+            updateLayoutParams(binding.bookCover, coverLayoutParams)
+            updateLayoutParams(binding.bookCoverContainer, coverContainerLayoutParams)
+            updateLayoutParams(binding.bookTitle, titleLayoutParams)
         }
 
         private fun applyCardTheme(book: BookEntity) {
@@ -320,33 +325,66 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 return
             }
 
-            applyHomeShelfState(highlight = false, animate = false)
+            applyHomeShelfState(
+                expanded = homeShelfState.expandedBookId == book.id,
+                highlight = false,
+                animate = false
+            )
 
             binding.root.setOnHoverListener { _, event ->
                 when (event.actionMasked) {
-                    MotionEvent.ACTION_HOVER_ENTER -> applyHomeShelfState(highlight = true, animate = true)
-                    MotionEvent.ACTION_HOVER_EXIT -> applyHomeShelfState(highlight = false, animate = true)
+                    MotionEvent.ACTION_HOVER_ENTER -> applyHomeShelfState(
+                        expanded = homeShelfState.expandedBookId == book.id,
+                        highlight = true,
+                        animate = true
+                    )
+                    MotionEvent.ACTION_HOVER_EXIT -> applyHomeShelfState(
+                        expanded = homeShelfState.expandedBookId == book.id,
+                        highlight = false,
+                        animate = true
+                    )
                 }
                 false
             }
             binding.root.setOnFocusChangeListener { _, hasFocus ->
-                applyHomeShelfState(highlight = hasFocus, animate = true)
+                applyHomeShelfState(
+                    expanded = homeShelfState.expandedBookId == book.id,
+                    highlight = hasFocus,
+                    animate = true
+                )
             }
             binding.root.setOnTouchListener { _, event ->
                 when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> applyHomeShelfState(highlight = true, animate = true)
+                    MotionEvent.ACTION_DOWN -> applyHomeShelfState(
+                        expanded = homeShelfState.expandedBookId == book.id,
+                        highlight = true,
+                        animate = true
+                    )
                     MotionEvent.ACTION_UP,
-                    MotionEvent.ACTION_CANCEL -> applyHomeShelfState(highlight = false, animate = true)
+                    MotionEvent.ACTION_CANCEL -> applyHomeShelfState(
+                        expanded = homeShelfState.expandedBookId == book.id,
+                        highlight = false,
+                        animate = true
+                    )
                 }
                 false
             }
         }
 
-        private fun applyHomeShelfState(highlight: Boolean, animate: Boolean) {
+        private fun applyHomeShelfState(expanded: Boolean, highlight: Boolean, animate: Boolean) {
             val duration = if (animate) 220L else 0L
             val density = binding.root.resources.displayMetrics.density
-            val lift = if (highlight) -(2f * density) else 0f
-            val scale = if (highlight) 1.015f else 1f
+            val lift = when {
+                expanded -> -(10f * density)
+                highlight -> -(2f * density)
+                else -> 0f
+            }
+            val scale = when {
+                expanded -> 1.14f
+                highlight -> 1.015f
+                else -> 1f
+            }
+            val coverShift = if (expanded) expandedCoverCenterShift() else 0f
 
             binding.root.animate().cancel()
             binding.bookCover.animate().cancel()
@@ -364,8 +402,8 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 .setDuration(duration)
                 .start()
             binding.bookCover.animate()
-                .alpha(0f)
-                .translationX(0f)
+                .alpha(if (expanded) 1f else 0f)
+                .translationX(coverShift)
                 .translationY(0f)
                 .setDuration(duration)
                 .start()
@@ -377,37 +415,93 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                 .setDuration(duration)
                 .start()
             binding.bookPageEdge.animate()
-                .alpha(0f)
-                .translationX(0f)
+                .alpha(if (expanded) 1f else 0f)
+                .translationX(coverShift + (3f * density))
                 .translationY(0f)
                 .setDuration(duration)
                 .start()
             binding.bookBackCover.animate()
-                .alpha(0f)
-                .translationX(0f)
+                .alpha(if (expanded) 1f else 0f)
+                .translationX(coverShift)
                 .translationY(0f)
                 .setDuration(duration)
                 .start()
-            applyHomeShelfPageSpread(animate = animate)
+            applyHomeShelfPageSpread(expanded = expanded, coverShift = coverShift, animate = animate)
+        }
+
+        private fun handleHomeShelfTap(book: BookEntity) {
+            val result = HomeShelfInteractionLogic.onBookTapped(homeShelfState, book.id)
+            val previousExpandedBookId = result.previousExpandedBookId
+            homeShelfState = result.state
+            previousExpandedBookId
+                ?.takeIf { it != book.id }
+                ?.let { previousId ->
+                    val previousIndex = currentList.indexOfFirst { it.id == previousId }
+                    if (previousIndex >= 0) notifyItemChanged(previousIndex)
+                }
+
+            applyHomeShelfState(expanded = true, highlight = false, animate = false)
+
+            playHomeShelfOpeningAnimation(book)
         }
 
         private fun playHomeShelfOpeningAnimation(book: BookEntity) {
-            binding.root.animate().cancel()
-            binding.root.animate()
-                .scaleX(1.06f)
-                .scaleY(1.06f)
-                .setDuration(90L)
-                .withEndAction {
-                    binding.root.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(80L)
-                        .start()
-                }
+            val density = binding.root.resources.displayMetrics.density
+            val coverShift = expandedCoverCenterShift()
+            val animatedPages = listOf(binding.bookPage1, binding.bookPage3, binding.bookPage5)
+
+            setTransientHardwareLayer(binding.bookCover, true)
+            setTransientHardwareLayer(binding.bookBackCover, true)
+            animatedPages.forEach { setTransientHardwareLayer(it, true) }
+
+            binding.bookCover.pivotX = 0f
+            binding.bookCover.pivotY = binding.bookCover.height / 2f
+            binding.bookBackCover.pivotX = 0f
+            binding.bookBackCover.pivotY = binding.bookBackCover.height / 2f
+            animatedPages.forEach {
+                it.pivotX = 0f
+                it.pivotY = it.height / 2f
+            }
+
+            binding.bookCover.animate().cancel()
+            binding.bookBackCover.animate().cancel()
+            animatedPages.forEach { it.animate().cancel() }
+
+            binding.bookCover.animate()
+                .rotationY(-150f)
+                .translationX(coverShift)
+                .scaleX(1.08f)
+                .scaleY(1.08f)
+                .setDuration(360L)
+                .withEndAction { setTransientHardwareLayer(binding.bookCover, false) }
                 .start()
+            binding.bookBackCover.animate()
+                .rotationY(-18f)
+                .translationX(coverShift)
+                .setDuration(360L)
+                .withEndAction { setTransientHardwareLayer(binding.bookBackCover, false) }
+                .start()
+
+            animatedPages.forEachIndexed { index, page ->
+                val rotation = when (index) {
+                    0 -> -135f
+                    1 -> -85f
+                    else -> -40f
+                }
+                page.animate()
+                    .alpha(1f)
+                    .translationX(coverShift + ((index + 1) * 4f * density))
+                    .rotationY(rotation)
+                    .setStartDelay((index * 24).toLong())
+                    .setDuration(320L)
+                    .withEndAction { setTransientHardwareLayer(page, false) }
+                    .start()
+            }
+
             binding.root.postDelayed({
+                homeShelfState = HomeShelfInteractionLogic.onOpeningAnimationFinished(homeShelfState)
                 onBookClick?.invoke(book)
-            }, 110L)
+            }, 280L)
         }
 
         private fun loadCover(book: BookEntity) {
@@ -481,12 +575,18 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
 
         private fun updatePaletteFromDrawable(book: BookEntity, drawable: android.graphics.drawable.Drawable) {
             if (presentationMode != PresentationMode.HOME_SHELF) return
+            if (homeShelfSpineColors.containsKey(book.id) || !pendingPaletteBookIds.add(book.id)) return
             runCatching {
                 val bitmap = drawable.toBitmap(width = 48, height = 72, config = android.graphics.Bitmap.Config.ARGB_8888)
-                val palette = Palette.from(bitmap).clearFilters().generate()
-                val color = palette.getDominantColor(defaultHomeShelfSpineColor(book))
-                updateHomeShelfSpineColor(book.id, darkenColor(color, 0.15f))
+                Palette.from(bitmap).clearFilters().generate { palette ->
+                    bitmap.recycle()
+                    val color = palette
+                        ?.getDominantColor(defaultHomeShelfSpineColor(book))
+                        ?: defaultHomeShelfSpineColor(book)
+                    updateHomeShelfSpineColor(book.id, darkenColor(color, 0.15f))
+                }
             }.onFailure {
+                pendingPaletteBookIds.remove(book.id)
                 updateHomeShelfSpineColor(book.id, defaultHomeShelfSpineColor(book))
             }
         }
@@ -494,6 +594,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
         private fun updateHomeShelfSpineColor(bookId: Int, color: Int) {
             if (homeShelfSpineColors[bookId] == color) return
             homeShelfSpineColors[bookId] = color
+            pendingPaletteBookIds.remove(bookId)
             if (presentationMode == PresentationMode.HOME_SHELF && bindingAdapterPosition != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
                 applyCardTheme(getBookForPosition(bindingAdapterPosition))
             }
@@ -530,15 +631,45 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
             )
         }
 
-        private fun applyHomeShelfPageSpread(animate: Boolean) {
+        private fun updateLayoutSize(view: View, width: Int, height: Int) {
+            val params = view.layoutParams
+            if (params.width == width && params.height == height) return
+            params.width = width
+            params.height = height
+            view.layoutParams = params
+        }
+
+        private fun updateLayoutParams(view: View, newParams: ViewGroup.LayoutParams) {
+            val current = view.layoutParams
+            if (current == null) {
+                view.layoutParams = newParams
+                return
+            }
+            if (current.width == newParams.width && current.height == newParams.height) {
+                if (current is ViewGroup.MarginLayoutParams && newParams is ViewGroup.MarginLayoutParams) {
+                    if (current.leftMargin == newParams.leftMargin &&
+                        current.topMargin == newParams.topMargin &&
+                        current.rightMargin == newParams.rightMargin &&
+                        current.bottomMargin == newParams.bottomMargin
+                    ) {
+                        return
+                    }
+                } else {
+                    return
+                }
+            }
+            view.layoutParams = newParams
+        }
+
+        private fun applyHomeShelfPageSpread(expanded: Boolean, coverShift: Float, animate: Boolean) {
             val duration = if (animate) 220L else 0L
-            val alpha = 0f
+            val alpha = if (expanded) 1f else 0f
             homeShelfPageViews().forEachIndexed { index, pageView ->
                 pageView.pivotX = 0f
                 pageView.pivotY = pageView.height / 2f
                 pageView.animate()
                     .alpha(alpha)
-                    .translationX(index.toFloat())
+                    .translationX(if (expanded) coverShift + ((index + 1) * 2f) else 0f)
                     .translationY(0f)
                     .rotationY(0f)
                     .scaleX(1f)
@@ -581,6 +712,17 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
             binding.bookPage5,
             binding.bookPage6
         )
+
+        private fun expandedCoverCenterShift(): Float {
+            val recyclerView = binding.root.parent as? View ?: return (binding.bookSpine.width * 0.7f)
+            val itemCenter = binding.root.x + (binding.root.width / 2f)
+            val targetCenter = recyclerView.width / 2f
+            return (targetCenter - itemCenter) + (binding.bookSpine.width * 0.65f)
+        }
+
+        private fun setTransientHardwareLayer(view: View, enabled: Boolean) {
+            view.setLayerType(if (enabled) View.LAYER_TYPE_HARDWARE else View.LAYER_TYPE_NONE, null)
+        }
     }
 }
 
