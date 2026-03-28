@@ -193,6 +193,11 @@ Last Steps (OPTIONAL):
 
 
 ## IX. Data Access Layer
+API Site Health:
+![API Site Health](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/api-site-health.png "API Site Health")
+
+Server Mirror Sync:
+![Server Mirror Sync](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/server-mirror-sync.png "Server Mirror Sync")
 
 Catalog API Code:
 ![Catalog API](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendApi.kt.png "Catalog API")
