@@ -1,28 +1,5 @@
 # Gutenberg Library
 
-## Mirror-Backed Setup
-
-This app now supports a mirror-backed architecture:
-
-- catalog metadata comes from your own backend
-- EPUB and cover files come from your own Project Gutenberg mirror
-
-Setup guide:
-
-- [Mirror Setup](docs/MIRROR_SETUP.md)
-
-Sample sync scripts:
-
-- [scripts/mirror-sync.sh](scripts/mirror-sync.sh)
-- [scripts/mirror-sync.ps1](scripts/mirror-sync.ps1)
-- [scripts/sync-mirror.ps1](scripts/sync-mirror.ps1)
-- [scripts/sync-mirror.bat](scripts/sync-mirror.bat)
-- [scripts/import-from-local-mirror.ps1](scripts/import-from-local-mirror.ps1)
-- [scripts/import-from-local-mirror.bat](scripts/import-from-local-mirror.bat)
-- [scripts/task-pg-mirror-sync.cmd](scripts/task-pg-mirror-sync.cmd)
-- [scripts/task-pg-catalog-import.cmd](scripts/task-pg-catalog-import.cmd)
-- [scripts/task-pg-catalog-backend.cmd](scripts/task-pg-catalog-backend.cmd)
-
 | Part | Table of Contents |
 | -------- | ------- |
 | I. | [Preliminary Design Review (PDR)](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#i-preliminary-design-review) |
@@ -33,7 +10,7 @@ Sample sync scripts:
 | VI. | [Use Case Diagrams](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#vi-use-case-diagrams) |
 | VII. | [Software Requirements Table](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#vii-software-requirements-table) |
 | VIII. | [ERD and UML Class Diagrams](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#viii-erd-and-uml-class-diagrams) |
-
+| IX. | [Data Access Layer](https://github.com/56006966/GutenbergLibrary/blob/master/README.md#ix-data-access-layer) |
 
 
 
@@ -212,3 +189,23 @@ Last Steps (OPTIONAL):
 --------------------
 ![ERD](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/Erd.png "ERD Diagram")
 ![UML Class Diagram](https://github.com/56006966/GutenbergLibrary/blob/master/diagrams/Uml.png "UML Diagram")
+
+
+
+## IX. Data Access Layer
+
+
+![Catalog API](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendApi.kt.png "Catalog API")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer1.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer2.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer3.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer5.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer6.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer7.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer8.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer9.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer10.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer11.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer12.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer13.kt.png "Catalog Server")
+![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer14.kt.png "Catalog Server")
