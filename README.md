@@ -193,6 +193,17 @@ Last Steps (OPTIONAL):
 
 
 ## IX. Data Access Layer
+I am currently in the process of rsyncing a mirror so I can host this app on my own mirror instead of relying on the gutenberg.org site directly.
+Per Project Gutenberg:
+
+>Information About Robot Access to our Pages:
+>The Project Gutenberg website is intended for human users only. Any perceived use of automated tools to access the Project Gutenberg website will result in a temporary or permanent block of your IP address.
+
+>Image Inlining:
+>You may use all images from our ebooks not protected by U.S. copyright law on your site. If the book is not protected by U.S. copyright law, the images in the book are also not protected by U.S. copyright law. Read the license inside the book to find out if the book is protected by U.S. copyright law. However you must copy the image and host it on your site, not link to the image hosted on our site.
+>Our servers are configured not to serve images to third-party websites. Therefore your users may only see a warning notice instead of the intended picture.
+
+
 API Site Health:
 ![API Site Health](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/api-site-health.png "API Site Health")
 
