@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public final class CatalogBackendServer {
     private static final int DEFAULT_PORT = 8080;
     private static final int PAGE_SIZE = 32;
+    private static final String DEFAULT_COVER_MIRROR_BASE_URL = "https://books.phunkypixels.com";
 
     public static void main(String[] args) throws Exception {
         int port = Integer.parseInt(System.getenv().getOrDefault("CATALOG_BACKEND_PORT", String.valueOf(DEFAULT_PORT)));
@@ -281,12 +282,13 @@ public final class CatalogBackendServer {
             boolean hasReleaseDate = parts.length >= 15;
             int shift = hasReleaseDate ? 1 : 0;
             Map<String, String> formats = new LinkedHashMap<>();
+            int bookId = Integer.parseInt(parts[0]);
             putIfPresent(formats, "application/epub+zip", parts[10 + shift]);
-            putIfPresent(formats, "image/jpeg", parts[11 + shift]);
+            putIfPresent(formats, "image/jpeg", resolveCoverUrl(bookId, parts[11 + shift]));
             putIfPresent(formats, "text/html", parts[12 + shift]);
             putIfPresent(formats, "text/plain; charset=utf-8", parts[13 + shift]);
             return new BookRecord(
-                Integer.parseInt(parts[0]),
+                bookId,
                 parts[1],
                 hasReleaseDate ? parts[2] : "",
                 splitList(parts[2 + shift]),
@@ -359,6 +361,30 @@ public final class CatalogBackendServer {
 
     private static String blankToDefault(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private static String resolveCoverUrl(int bookId, String sourceUrl) {
+        if (sourceUrl == null || sourceUrl.isBlank()) {
+            return sourceUrl;
+        }
+
+        String mirrorBaseUrl = System.getenv().getOrDefault("CATALOG_COVER_BASE_URL", DEFAULT_COVER_MIRROR_BASE_URL).trim();
+        if (mirrorBaseUrl.isBlank()) {
+            return sourceUrl;
+        }
+
+        String normalizedBaseUrl = mirrorBaseUrl.endsWith("/")
+            ? mirrorBaseUrl.substring(0, mirrorBaseUrl.length() - 1)
+            : mirrorBaseUrl;
+
+        String lowerSourceUrl = sourceUrl.toLowerCase(Locale.US);
+        String expectedPrefix = "https://www.gutenberg.org/cache/epub/" + bookId + "/";
+        String expectedHttpPrefix = "http://www.gutenberg.org/cache/epub/" + bookId + "/";
+        if (lowerSourceUrl.startsWith(expectedPrefix) || lowerSourceUrl.startsWith(expectedHttpPrefix)) {
+            return normalizedBaseUrl + "/" + bookId + "/pg" + bookId + ".cover.medium.jpg";
+        }
+
+        return sourceUrl;
     }
 
     private static Map<String, String> parseQuery(String rawQuery) {
