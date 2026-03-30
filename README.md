@@ -193,9 +193,27 @@ Last Steps (OPTIONAL):
 
 
 ## IX. Data Access Layer
+I am currently in the process of rsyncing a mirror so I can host this app on my own mirror instead of relying on the gutenberg.org site directly.
+Per Project Gutenberg:
+
+>Information About Robot Access to our Pages:
+>The Project Gutenberg website is intended for human users only. Any perceived use of automated tools to access the Project Gutenberg website will result in a temporary or permanent block of your IP address.
+
+>Image Inlining:
+>You may use all images from our ebooks not protected by U.S. copyright law on your site. If the book is not protected by U.S. copyright law, the images in the book are also not protected by U.S. copyright law. Read the license inside the book to find out if the book is protected by U.S. copyright law. However you must copy the image and host it on your site, not link to the image hosted on our site.
+>Our servers are configured not to serve images to third-party websites. Therefore your users may only see a warning notice instead of the intended picture.
 
 
+API Site Health:
+![API Site Health](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/api-site-health.png "API Site Health")
+
+Server Mirror Sync:
+![Server Mirror Sync](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/server-mirror-sync.png "Server Mirror Sync")
+
+Catalog API Code:
 ![Catalog API](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendApi.kt.png "Catalog API")
+
+Catalog Server Code:
 ![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer1.png "Catalog Server")
 ![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer2.png "Catalog Server")
 ![Catalog Server](https://github.com/56006966/GutenbergLibrary/blob/master/screenshots/CatalogBackendServer3.png "Catalog Server")
