@@ -18,7 +18,7 @@ The server looks for:
 Header columns:
 
 ```text
-id	title	authors	subjects	languages	bookshelves	summaries	media_type	download_count	copyright	epub_url	cover_url	html_url	text_url
+id	title	release_date	authors	subjects	languages	bookshelves	summaries	media_type	download_count	copyright	epub_url	cover_url	html_url	text_url
 ```
 
 Multi-value columns use `|` as a separator.
@@ -127,14 +127,14 @@ scripts\import-from-local-mirror.bat
 Notes:
 
 - the importer scans recursively for `.rdf` files
-- it extracts title, authors, subjects, languages, bookshelves, and common format URLs
+- it extracts title, release date, authors, subjects, languages, bookshelves, and common format URLs
 - `download_count` currently defaults to `0` because Project Gutenberg RDF metadata does not carry Gutendex-style popularity counts
 
 ## Supported Query Parameters
 
 - `search`
 - `topic`
-- `sort` (`popular`, `ascending`, `descending`)
+- `sort` (`popular`, `newest`, `ascending`, `descending`)
 - `ids`
 - `languages`
 - `mime_type`

@@ -101,7 +101,7 @@ open class BookRepository(
     }
 
     open suspend fun getOfficialNewestBooks(limit: Int = 12): List<BookEntity> = withContext(Dispatchers.IO) {
-        catalogDataSource.getBooks()
+        catalogDataSource.getBooks(sort = "newest")
             .results
             .take(limit)
             .map(::mapRemoteBookToShelf)

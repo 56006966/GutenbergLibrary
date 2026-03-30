@@ -26,6 +26,7 @@ public final class CatalogImportTool {
     private static final String HEADER = String.join("\t",
         "id",
         "title",
+        "release_date",
         "authors",
         "subjects",
         "languages",
@@ -97,6 +98,7 @@ public final class CatalogImportTool {
             List<String> languages = valuesFromBag(document, "language");
             List<String> bookshelves = valuesFromBag(document, "bookshelf");
             String summary = firstText(document, "description");
+            String releaseDate = parseReleaseDate(document);
             Boolean copyright = parseNullableBoolean(firstText(document, "isFormatOf"));
             Map<String, String> formats = collectFormats(document);
 
@@ -107,6 +109,7 @@ public final class CatalogImportTool {
             return java.util.Optional.of(new Row(
                 id,
                 title,
+                releaseDate,
                 authors,
                 subjects,
                 languages,
@@ -242,6 +245,30 @@ public final class CatalogImportTool {
         return null;
     }
 
+    private static String parseReleaseDate(Document document) {
+        for (String localName : List.of("issued", "release_date")) {
+            String value = firstText(document, localName);
+            if (!value.isBlank()) {
+                return normalizeReleaseDate(value);
+            }
+        }
+        return "";
+    }
+
+    private static String normalizeReleaseDate(String value) {
+        String trimmed = cleanCell(value);
+        if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            return trimmed;
+        }
+        if (trimmed.length() >= 10) {
+            String prefix = trimmed.substring(0, 10);
+            if (prefix.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                return prefix;
+            }
+        }
+        return trimmed;
+    }
+
     private static void writeTsv(Path outputFile, List<Row> rows) throws IOException {
         Files.createDirectories(outputFile.toAbsolutePath().getParent());
         List<String> lines = new ArrayList<>();
@@ -263,6 +290,7 @@ public final class CatalogImportTool {
     private record Row(
         int id,
         String title,
+        String releaseDate,
         List<String> authors,
         List<String> subjects,
         List<String> languages,
@@ -280,6 +308,7 @@ public final class CatalogImportTool {
             return Stream.of(
                     String.valueOf(id),
                     title,
+                    releaseDate,
                     joinList(authors),
                     joinList(subjects),
                     joinList(languages),

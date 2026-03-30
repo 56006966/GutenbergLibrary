@@ -10,7 +10,7 @@ class GutenbergMirrorTest {
     fun `rewrite candidates prefer configured mirror for gutenberg hosts`() {
         val candidates = GutenbergMirror.resolveCandidates("https://www.gutenberg.org/cache/epub/84/pg84-images.epub")
 
-        assertEquals("https://aleph.pglaf.org/cache/epub/84/pg84-images.epub", candidates.first())
+        assertEquals("https://books.phunkypixels.com/cache/epub/84/pg84-images.epub", candidates.first())
         assertTrue(candidates.contains("https://gutenberg.pglaf.org/cache/epub/84/pg84-images.epub"))
     }
 

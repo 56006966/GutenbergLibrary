@@ -12,6 +12,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -176,6 +177,9 @@ public final class CatalogBackendServer {
             Comparator<BookRecord> comparator = switch (sort) {
                 case "ascending" -> Comparator.comparingInt(book -> book.id);
                 case "descending" -> Comparator.<BookRecord>comparingInt(book -> book.id).reversed();
+                case "newest" -> Comparator
+                    .<BookRecord, LocalDate>comparing(book -> parseReleaseDate(book.releaseDate), Comparator.reverseOrder())
+                    .thenComparing(Comparator.comparingInt((BookRecord book) -> book.id).reversed());
                 default -> Comparator.<BookRecord>comparingInt(book -> book.downloadCount).reversed()
                     .thenComparingInt(book -> book.id);
             };
@@ -234,6 +238,7 @@ public final class CatalogBackendServer {
     private static final class BookRecord {
         private final int id;
         private final String title;
+        private final String releaseDate;
         private final List<String> authors;
         private final List<String> subjects;
         private final List<String> languages;
@@ -247,6 +252,7 @@ public final class CatalogBackendServer {
         private BookRecord(
             int id,
             String title,
+            String releaseDate,
             List<String> authors,
             List<String> subjects,
             List<String> languages,
@@ -259,6 +265,7 @@ public final class CatalogBackendServer {
         ) {
             this.id = id;
             this.title = title;
+            this.releaseDate = releaseDate;
             this.authors = authors;
             this.subjects = subjects;
             this.languages = languages;
@@ -271,22 +278,25 @@ public final class CatalogBackendServer {
         }
 
         private static BookRecord from(String[] parts) {
+            boolean hasReleaseDate = parts.length >= 15;
+            int shift = hasReleaseDate ? 1 : 0;
             Map<String, String> formats = new LinkedHashMap<>();
-            putIfPresent(formats, "application/epub+zip", parts[10]);
-            putIfPresent(formats, "image/jpeg", parts[11]);
-            putIfPresent(formats, "text/html", parts[12]);
-            putIfPresent(formats, "text/plain; charset=utf-8", parts[13]);
+            putIfPresent(formats, "application/epub+zip", parts[10 + shift]);
+            putIfPresent(formats, "image/jpeg", parts[11 + shift]);
+            putIfPresent(formats, "text/html", parts[12 + shift]);
+            putIfPresent(formats, "text/plain; charset=utf-8", parts[13 + shift]);
             return new BookRecord(
                 Integer.parseInt(parts[0]),
                 parts[1],
-                splitList(parts[2]),
-                splitList(parts[3]),
-                splitList(parts[4]),
-                splitList(parts[5]),
-                splitList(parts[6]),
-                blankToDefault(parts[7], "Text"),
-                parseInt(parts[8], 0),
-                parseNullableBoolean(parts[9]),
+                hasReleaseDate ? parts[2] : "",
+                splitList(parts[2 + shift]),
+                splitList(parts[3 + shift]),
+                splitList(parts[4 + shift]),
+                splitList(parts[5 + shift]),
+                splitList(parts[6 + shift]),
+                blankToDefault(parts[7 + shift], "Text"),
+                parseInt(parts[8 + shift], 0),
+                parseNullableBoolean(parts[9 + shift]),
                 formats
             );
         }
@@ -303,6 +313,7 @@ public final class CatalogBackendServer {
             return "{"
                 + "\"id\":" + id + ","
                 + "\"title\":\"" + escapeJson(title) + "\","
+                + "\"release_date\":" + (releaseDate.isBlank() ? "null" : "\"" + escapeJson(releaseDate) + "\"") + ","
                 + "\"subjects\":" + toJsonArray(subjects) + ","
                 + "\"authors\":[" + authorsJson + "],"
                 + "\"summaries\":" + toJsonArray(summaries) + ","
@@ -384,6 +395,17 @@ public final class CatalogBackendServer {
 
     private static String urlEncode(String value) {
         return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private static LocalDate parseReleaseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return LocalDate.MIN;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (Exception ignored) {
+            return LocalDate.MIN;
+        }
     }
 
     private static void writeJson(HttpExchange exchange, int statusCode, String body) throws IOException {

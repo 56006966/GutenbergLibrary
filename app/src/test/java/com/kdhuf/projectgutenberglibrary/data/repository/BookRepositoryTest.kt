@@ -49,6 +49,15 @@ class BookRepositoryTest {
     }
 
     @Test
+    fun `getOfficialNewestBooks requests newest sort from api`() = runTest {
+        val books = repository.getOfficialNewestBooks(limit = 1)
+
+        assertEquals("newest", catalogDataSource.lastSort)
+        assertEquals(1, books.size)
+        assertEquals("Popular page", books.first().title)
+    }
+
+    @Test
     fun `mapRemoteBookToShelf uses metadata from dto when available`() {
         val dto = BookDto(
             id = 1342,

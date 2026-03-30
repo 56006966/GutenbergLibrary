@@ -16,11 +16,11 @@ android {
         versionCode = 1
         versionName = "1.0"
         val gutenbergMirrorBaseUrl = (project.findProperty("gutenbergMirrorBaseUrl") as String?)
-            ?: "https://aleph.pglaf.org/"
+            ?: "https://books.phunkypixels.com/"
         val catalogApiBaseUrl = (project.findProperty("catalogApiBaseUrl") as String?)
-            ?: "http://10.0.2.2:8080/"
+            ?: "https://projectgutenberg.phunkypixels.com/"
         val catalogApiUserAgent = (project.findProperty("catalogApiUserAgent") as String?)
-            ?: "ProjectGutenbergLibrary/1.0 (+https://example.com/catalog-backend)"
+            ?: "ProjectGutenbergLibrary/1.0 (+https://projectgutenberg.phunkypixels.com)"
         buildConfigField("String", "GUTENBERG_MIRROR_BASE_URL", "\"$gutenbergMirrorBaseUrl\"")
         buildConfigField("String", "CATALOG_API_BASE_URL", "\"$catalogApiBaseUrl\"")
         buildConfigField("String", "CATALOG_API_USER_AGENT", "\"$catalogApiUserAgent\"")
