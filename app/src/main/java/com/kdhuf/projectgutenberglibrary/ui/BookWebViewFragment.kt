@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
@@ -22,7 +23,9 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.GestureDetector
 import android.view.animation.DecelerateInterpolator
+import android.widget.ArrayAdapter
 import android.widget.SeekBar
+import android.widget.TextView
 import android.webkit.WebViewClient
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -70,6 +73,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
     private var isPageFlipInProgress = false
     private var pendingRevealForward: Boolean? = null
     private var hasPlayedOpeningAnimation = false
+    private var pendingOpeningAnimationAfterCoverLoad = false
     private var restoredFromInstanceState = false
     private var lastNavigationEventAt = 0L
     private var currentScrollRatio = 0f
@@ -297,7 +301,11 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
                 if (!restoredFromInstanceState) {
                     pendingPageIndex = localBook?.lastPageIndex ?: 0
                 }
-                prepareOpeningCover(localBook?.coverPath ?: localBook?.coverUrl)
+                prepareOpeningCover(
+                    localBook?.coverPath
+                        ?: localBook?.coverUrl
+                        ?: buildFallbackCoverUrl(args.bookId)
+                )
                 if (shouldOpenSavedEpub(savedEpub)) {
                     val localEpub = checkNotNull(savedEpub)
                     binding.statusText.text = getString(R.string.book_opening_saved_status)
@@ -821,9 +829,11 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
             entry.pageIndex <= currentPageIndex
         }.coerceAtLeast(0)
 
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.contents)
-            .setSingleChoiceItems(tocLabels, selectedIndex) { dialog, which ->
+        showReaderChoiceDialog(
+            titleResId = R.string.contents,
+            labels = tocLabels.asList(),
+            selectedIndex = selectedIndex
+        ) { dialog, which ->
                 val entry = readerStructure.tocEntries[which]
                 if (entry.pageIndex != currentPageIndex) {
                     animateToPage(
@@ -833,7 +843,6 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
                 }
                 dialog.dismiss()
             }
-            .show()
     }
 
     private fun renderCurrentPage() {
@@ -1076,16 +1085,76 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         )
         val selectedIndex = options.indexOfFirst { it.first == currentTextZoom }.coerceAtLeast(0)
 
-        AlertDialog.Builder(anchor.context)
-            .setTitle(R.string.choose_text_size)
-            .setSingleChoiceItems(
-                options.map { it.second }.toTypedArray(),
-                selectedIndex
-            ) { dialog, which ->
+        showReaderChoiceDialog(
+            titleResId = R.string.choose_text_size,
+            labels = options.map { it.second },
+            selectedIndex = selectedIndex
+        ) { dialog, which ->
                 setTextZoom(options[which].first)
                 dialog.dismiss()
             }
-            .show()
+    }
+
+    private fun showReaderChoiceDialog(
+        titleResId: Int,
+        labels: List<String>,
+        selectedIndex: Int,
+        onSelect: (AlertDialog, Int) -> Unit
+    ) {
+        val surfaceColor = Color.parseColor(
+            if (inkModeEnabled) ReaderUiPalette.DARK_SURFACE else ReaderUiPalette.LIGHT_SURFACE
+        )
+        val textColor = Color.parseColor(
+            if (inkModeEnabled) ReaderUiPalette.DARK_TEXT else ReaderUiPalette.LIGHT_TEXT
+        )
+        val secondaryColor = Color.parseColor(
+            if (inkModeEnabled) ReaderUiPalette.DARK_SECONDARY_TEXT else ReaderUiPalette.LIGHT_SECONDARY_TEXT
+        )
+
+        val adapter = object : ArrayAdapter<String>(
+            requireContext(),
+            android.R.layout.simple_list_item_single_choice,
+            labels
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                return (super.getView(position, convertView, parent) as TextView).apply {
+                    setTextColor(textColor)
+                    setBackgroundColor(surfaceColor)
+                }
+            }
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle(titleResId)
+            .setAdapter(adapter, null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawable(ColorDrawable(surfaceColor))
+            dialog.findViewById<TextView>(
+                resources.getIdentifier("alertTitle", "id", "android")
+            )?.setTextColor(textColor)
+            dialog.listView?.apply {
+                choiceMode = android.widget.ListView.CHOICE_MODE_SINGLE
+                setBackgroundColor(surfaceColor)
+                divider = ColorDrawable(secondaryColor)
+                dividerHeight = 1
+                setItemChecked(selectedIndex, true)
+                selector = ColorDrawable(
+                    Color.argb(
+                        if (inkModeEnabled) 56 else 32,
+                        Color.red(secondaryColor),
+                        Color.green(secondaryColor),
+                        Color.blue(secondaryColor)
+                    )
+                )
+                setOnItemClickListener { _, _, which, _ ->
+                    onSelect(dialog, which)
+                }
+            }
+        }
+
+        dialog.show()
     }
 
     private fun rerenderCurrentContent() {
@@ -1471,6 +1540,19 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
             crossfade(false)
             placeholder(android.R.drawable.ic_menu_report_image)
             error(android.R.drawable.ic_menu_report_image)
+            listener(
+                onSuccess = { _, _ ->
+                    if (pendingOpeningAnimationAfterCoverLoad && !hasPlayedOpeningAnimation) {
+                        playOpeningCoverAnimationIfNeeded()
+                    }
+                },
+                onError = { _, _ ->
+                    if (pendingOpeningAnimationAfterCoverLoad && !hasPlayedOpeningAnimation) {
+                        pendingOpeningAnimationAfterCoverLoad = false
+                        binding.webView.alpha = 1f
+                    }
+                }
+            )
         }
         openingAnimationViews().forEach { view ->
             view.visibility = View.VISIBLE
@@ -1497,12 +1579,18 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
     }
 
     private fun playOpeningCoverAnimationIfNeeded() {
-        if (hasPlayedOpeningAnimation || binding.openingCoverImage.drawable == null) {
+        if (hasPlayedOpeningAnimation) {
+            binding.webView.alpha = 1f
+            return
+        }
+        if (binding.openingCoverImage.drawable == null) {
+            pendingOpeningAnimationAfterCoverLoad = true
             binding.webView.alpha = 1f
             return
         }
 
         hasPlayedOpeningAnimation = true
+        pendingOpeningAnimationAfterCoverLoad = false
         binding.webView.alpha = 0f
         binding.webView.scaleX = 1.08f
         binding.webView.scaleY = 1.08f

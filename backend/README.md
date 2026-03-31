@@ -46,6 +46,7 @@ Environment variables:
 - `CATALOG_DATA_FILE`
 - `CATALOG_PUBLIC_BASE_URL`
 - `CATALOG_COVER_BASE_URL`
+- `CATALOG_FILES_BASE_URL`
 
 Useful examples:
 
@@ -54,6 +55,7 @@ $env:CATALOG_BACKEND_HOST="0.0.0.0"
 $env:CATALOG_BACKEND_PORT="8080"
 $env:CATALOG_PUBLIC_BASE_URL="https://api.example.com"
 $env:CATALOG_COVER_BASE_URL="https://books.phunkypixels.com"
+$env:CATALOG_FILES_BASE_URL="https://books.phunkypixels.com"
 ```
 
 Health check:

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public final class CatalogBackendServer {
     private static final int DEFAULT_PORT = 8080;
     private static final int PAGE_SIZE = 32;
-    private static final String DEFAULT_COVER_MIRROR_BASE_URL = "https://books.phunkypixels.com";
+    private static final String DEFAULT_MIRROR_BASE_URL = "https://books.phunkypixels.com";
 
     public static void main(String[] args) throws Exception {
         int port = Integer.parseInt(System.getenv().getOrDefault("CATALOG_BACKEND_PORT", String.valueOf(DEFAULT_PORT)));
@@ -283,7 +283,7 @@ public final class CatalogBackendServer {
             int shift = hasReleaseDate ? 1 : 0;
             Map<String, String> formats = new LinkedHashMap<>();
             int bookId = Integer.parseInt(parts[0]);
-            putIfPresent(formats, "application/epub+zip", parts[10 + shift]);
+            putIfPresent(formats, "application/epub+zip", resolveEpubUrl(bookId, parts[10 + shift]));
             putIfPresent(formats, "image/jpeg", resolveCoverUrl(bookId, parts[11 + shift]));
             putIfPresent(formats, "text/html", parts[12 + shift]);
             putIfPresent(formats, "text/plain; charset=utf-8", parts[13 + shift]);
@@ -368,7 +368,7 @@ public final class CatalogBackendServer {
             return sourceUrl;
         }
 
-        String mirrorBaseUrl = System.getenv().getOrDefault("CATALOG_COVER_BASE_URL", DEFAULT_COVER_MIRROR_BASE_URL).trim();
+        String mirrorBaseUrl = System.getenv().getOrDefault("CATALOG_COVER_BASE_URL", DEFAULT_MIRROR_BASE_URL).trim();
         if (mirrorBaseUrl.isBlank()) {
             return sourceUrl;
         }
@@ -382,6 +382,33 @@ public final class CatalogBackendServer {
         String expectedHttpPrefix = "http://www.gutenberg.org/cache/epub/" + bookId + "/";
         if (lowerSourceUrl.startsWith(expectedPrefix) || lowerSourceUrl.startsWith(expectedHttpPrefix)) {
             return normalizedBaseUrl + "/" + bookId + "/pg" + bookId + ".cover.medium.jpg";
+        }
+
+        return sourceUrl;
+    }
+
+    private static String resolveEpubUrl(int bookId, String sourceUrl) {
+        if (sourceUrl == null || sourceUrl.isBlank()) {
+            return sourceUrl;
+        }
+
+        String mirrorBaseUrl = System.getenv().getOrDefault("CATALOG_FILES_BASE_URL", DEFAULT_MIRROR_BASE_URL).trim();
+        if (mirrorBaseUrl.isBlank()) {
+            return sourceUrl;
+        }
+
+        String normalizedBaseUrl = mirrorBaseUrl.endsWith("/")
+            ? mirrorBaseUrl.substring(0, mirrorBaseUrl.length() - 1)
+            : mirrorBaseUrl;
+
+        String lowerSourceUrl = sourceUrl.toLowerCase(Locale.US);
+        String httpsImages3Url = "https://www.gutenberg.org/ebooks/" + bookId + ".epub3.images";
+        String httpImages3Url = "http://www.gutenberg.org/ebooks/" + bookId + ".epub3.images";
+        String httpsImagesUrl = "https://www.gutenberg.org/cache/epub/" + bookId + "/pg" + bookId + "-images.epub";
+        String httpImagesUrl = "http://www.gutenberg.org/cache/epub/" + bookId + "/pg" + bookId + "-images.epub";
+        if (lowerSourceUrl.equals(httpsImages3Url) || lowerSourceUrl.equals(httpImages3Url)
+            || lowerSourceUrl.equals(httpsImagesUrl) || lowerSourceUrl.equals(httpImagesUrl)) {
+            return normalizedBaseUrl + "/" + bookId + "/pg" + bookId + "-images-3.epub";
         }
 
         return sourceUrl;

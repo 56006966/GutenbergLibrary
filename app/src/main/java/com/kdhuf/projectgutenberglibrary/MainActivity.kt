@@ -36,6 +36,11 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     companion object {
+        private const val STATE_LAST_DESTINATION_ID = "last_destination_id"
+        private const val STATE_STARTUP_OVERLAY_SHOWN = "startup_overlay_shown"
+        private const val STATE_WAITING_FOR_STARTUP_ENTER = "waiting_for_startup_enter"
+        private const val STATE_DRAWER_ALLOWED = "drawer_allowed"
+
         private val DRAWER_DESTINATIONS = setOf(
             R.id.nav_library,
             R.id.nav_my_library_screen,
@@ -97,8 +102,19 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
         val navController = navHostFragment.navController
 
+        restoreActivityState(savedInstanceState)
         preloadTileWallCovers()
-        showStartupOverlay()
+
+        if (startupOverlayShown) {
+            binding.startupLoadingPanel.visibility = android.view.View.GONE
+            binding.navigationLoadingPanel.visibility = android.view.View.GONE
+            binding.launchLoadingOverlay.visibility = android.view.View.GONE
+            binding.launchLoadingOverlay.alpha = 0f
+            binding.launchTileWall.pauseAnimation()
+            isTransitionOverlayRunning = false
+        } else {
+            showStartupOverlay()
+        }
 
         binding.openDrawerButton.setOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
@@ -166,6 +182,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_LAST_DESTINATION_ID, lastDestinationId ?: 0)
+        outState.putBoolean(STATE_STARTUP_OVERLAY_SHOWN, startupOverlayShown)
+        outState.putBoolean(STATE_WAITING_FOR_STARTUP_ENTER, waitingForStartupEnter)
+        outState.putBoolean(STATE_DRAWER_ALLOWED, drawerAllowedForDestination)
+    }
+
     private fun preloadTileWallCovers() {
         val shelfCache = ShelfCache(this)
         val repository = BookRepository(
@@ -195,6 +219,14 @@ class MainActivity : AppCompatActivity() {
                 updateLaunchWallBooks(books)
             }
         }
+    }
+
+    private fun restoreActivityState(savedInstanceState: Bundle?) {
+        if (savedInstanceState == null) return
+        lastDestinationId = savedInstanceState.getInt(STATE_LAST_DESTINATION_ID).takeIf { it != 0 }
+        startupOverlayShown = savedInstanceState.getBoolean(STATE_STARTUP_OVERLAY_SHOWN, false)
+        waitingForStartupEnter = savedInstanceState.getBoolean(STATE_WAITING_FOR_STARTUP_ENTER, !startupOverlayShown)
+        drawerAllowedForDestination = savedInstanceState.getBoolean(STATE_DRAWER_ALLOWED, false)
     }
 
     private fun maybeShowTransitionOverlay(destinationId: Int) {
