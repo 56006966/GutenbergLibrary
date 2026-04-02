@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kdhuf.projectgutenberglibrary"
+    namespace = "com.phunkypixels.projectgutenberglibrary"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.kdhuf.projectgutenberglibrary"
+        applicationId = "com.phunkypixels.projectgutenberglibrary"
         minSdk = 21
         targetSdk = 35
         versionCode = 1
