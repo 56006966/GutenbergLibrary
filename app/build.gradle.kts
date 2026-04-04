@@ -6,15 +6,15 @@ plugins {
 }
 
 android {
-    namespace = "com.phunkypixels.projectgutenberglibrary"
+    namespace = "com.kdhuf.projectgutenberglibrary"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.phunkypixels.projectgutenberglibrary"
+        applicationId = "com.kdhuf.projectgutenberglibrary"
         minSdk = 21
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.3.1"
         val gutenbergMirrorBaseUrl = (project.findProperty("gutenbergMirrorBaseUrl") as String?)
             ?: "https://books.phunkypixels.com/"
         val catalogApiBaseUrl = (project.findProperty("catalogApiBaseUrl") as String?)

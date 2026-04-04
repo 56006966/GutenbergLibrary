@@ -16,6 +16,6 @@ for /r "%SOURCEROOT%" %%f in (*.java) do (
 )
 
 call "%JAVAC%" -d "%BUILDROOT%" %SOURCES%
-call "%JAVA%" -cp "%BUILDROOT%" com.phunkypixels.projectgutenberglibrary.backend.CatalogBackendServer
+call "%JAVA%" -cp "%BUILDROOT%" com.kdhuf.projectgutenberglibrary.backend.CatalogBackendServer
 
 endlocal

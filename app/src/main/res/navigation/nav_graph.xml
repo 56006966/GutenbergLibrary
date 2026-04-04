@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/nav_library"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.LibraryFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.LibraryFragment"
         android:label="Library" >
     <action
             android:id="@+id/action_libraryFragment_to_bookWebViewFragment"
@@ -27,7 +27,7 @@
 
     <fragment
         android:id="@+id/bookWebViewFragment"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.BookWebViewFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.BookWebViewFragment"
         android:label="Book" >
         <argument
             android:name="bookId"
@@ -39,7 +39,7 @@
 
     <fragment
         android:id="@+id/nav_frequently_downloaded_screen"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.FrequentlyDownloadedFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.FrequentlyDownloadedFragment"
         android:label="@string/menu_frequently_downloaded" >
         <action
             android:id="@+id/action_nav_frequently_downloaded_screen_to_bookWebViewFragment"
@@ -59,22 +59,22 @@
 
     <fragment
         android:id="@+id/nav_master_categories_screen"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.MasterCategoriesFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.MasterCategoriesFragment"
         android:label="@string/menu_master_categories" />
 
     <fragment
         android:id="@+id/nav_reading_lists_screen"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.ReadingListsFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.ReadingListsFragment"
         android:label="@string/menu_reading_lists" />
 
     <fragment
         android:id="@+id/nav_search_options_screen"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.SearchOptionsFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.SearchOptionsFragment"
         android:label="@string/menu_search_options" />
 
     <fragment
         android:id="@+id/nav_my_library_screen"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.MyLibraryFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.MyLibraryFragment"
         android:label="@string/shelf_my_library" >
         <action
             android:id="@+id/action_nav_my_library_screen_to_bookWebViewFragment"

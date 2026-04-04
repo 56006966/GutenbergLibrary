@@ -133,6 +133,7 @@ Notes:
 - the importer scans recursively for `.rdf` files
 - it extracts title, release date, authors, subjects, languages, bookshelves, and common format URLs
 - `download_count` currently defaults to `0` because Project Gutenberg RDF metadata does not carry Gutendex-style popularity counts
+- books without an EPUB URL are skipped during import so the catalog only includes titles that can be opened as EPUBs
 
 ## Supported Query Parameters
 

@@ -7,31 +7,31 @@
 
     <fragment
         android:id="@+id/nav_transform"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.transform.TransformFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.transform.TransformFragment"
         android:label="@string/menu_transform"
         tools:layout="@layout/fragment_transform" />
 
     <fragment
         android:id="@+id/nav_reflow"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.reflow.ReflowFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.reflow.ReflowFragment"
         android:label="@string/menu_reflow"
         tools:layout="@layout/fragment_reflow" />
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.slideshow.SlideshowFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
 
     <fragment
         android:id="@+id/nav_settings"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.settings.SettingsFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.settings.SettingsFragment"
         android:label="@string/menu_settings"
         tools:layout="@layout/fragment_settings" />
 
     <fragment
         android:id="@+id/nav_library"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.LibraryFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.LibraryFragment"
         android:label="Library"
         tools:layout="@layout/fragment_library" >
         <action
@@ -47,7 +47,7 @@
     </fragment>
     <fragment
         android:id="@+id/nav_book_web_view"
-        android:name="com.phunkypixels.projectgutenberglibrary.ui.BookWebViewFragment"
+        android:name="com.kdhuf.projectgutenberglibrary.ui.BookWebViewFragment"
         android:label="Book"
         tools:layout="@layout/fragment_book_webview" >
         <argument

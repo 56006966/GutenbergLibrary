@@ -6,7 +6,7 @@ $Java = Join-Path $JavaHome "bin\java.exe"
 
 $SourceRoot = "backend\src\main\java"
 $BuildRoot = "backend\build\classes"
-$MainClass = "com.phunkypixels.projectgutenberglibrary.backend.CatalogImportTool"
+$MainClass = "com.kdhuf.projectgutenberglibrary.backend.CatalogImportTool"
 
 New-Item -ItemType Directory -Force -Path $BuildRoot | Out-Null
 

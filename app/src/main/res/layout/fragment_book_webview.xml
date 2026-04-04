@@ -230,6 +230,53 @@
                         android:background="#66000000"
                         android:visibility="gone" />
 
+                    <LinearLayout
+                        android:id="@+id/openingStatusOverlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:layout_margin="16dp"
+                        android:background="#CC10213D"
+                        android:elevation="10dp"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/openingStatusText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/book_opening_status"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.progressindicator.LinearProgressIndicator
+                            android:id="@+id/openingProgressBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:indeterminate="true" />
+
+                        <TextView
+                            android:id="@+id/openingErrorText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
+                            android:textColor="#FFFFB4B4"
+                            android:visibility="gone" />
+
+                        <Button
+                            android:id="@+id/retryDownloadButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:text="@string/retry_download"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
                     <ImageButton
                         android:id="@+id/readAloudCursorHandle"
                         android:layout_width="48dp"

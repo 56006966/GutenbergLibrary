@@ -42,7 +42,7 @@
             android:focusable="true"
             android:visibility="gone">
 
-            <com.phunkypixels.projectgutenberglibrary.ui.LaunchTileWallView
+            <com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallView
                 android:id="@+id/launchTileWall"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />

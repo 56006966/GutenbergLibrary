@@ -26,10 +26,12 @@
     <string name="book_opening_saved_status">Opening saved book from My Library...</string>
     <string name="book_reorienting_status">Reorientating reader...</string>
     <string name="book_downloading_status">Downloading EPUB and saving it to My Library...</string>
+    <string name="book_retry_download_status">Trying another download source...</string>
     <string name="book_launching_status">Opening the reader...</string>
     <string name="book_text_fallback_status">EPUB unavailable, loading readable text instead...</string>
     <string name="book_saved_library_status">Saved to your local shelf.</string>
     <string name="book_failed_status">Could not open this title.</string>
+    <string name="retry_download">Retry download</string>
     <string name="previous_chapter">Previous Page</string>
     <string name="next_chapter">Next Page</string>
     <string name="chapter_position">Page %1$s of %2$s</string>

@@ -1,0 +1,19 @@
+package com.kdhuf.projectgutenberglibrary.data.catalog
+
+import com.kdhuf.projectgutenberglibrary.data.remote.BookDto
+import com.kdhuf.projectgutenberglibrary.data.remote.CatalogBackendApi
+import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergResponse
+
+class RemoteCatalogDataSource(
+    private val api: CatalogBackendApi
+) : CatalogDataSource {
+    override suspend fun getBooks(
+        search: String?,
+        topic: String?,
+        sort: String?
+    ): GutenbergResponse = api.getBooks(search, topic, sort)
+
+    override suspend fun getBooksPage(url: String): GutenbergResponse = api.getBooksPage(url)
+
+    override suspend fun getBookDetails(id: Int): BookDto = api.getBookDetails(id)
+}
