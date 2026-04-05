@@ -197,7 +197,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
             } else if (presentationMode == PresentationMode.HOME_SHELF) {
                 val spineMetrics = homeShelfMetrics(bookTitle = book.title, density = density)
                 val spineWidth = spineMetrics.widthPx
-                val coverWidth = (118 * density).toInt()
+                val coverWidth = (108 * density).toInt()
                 val coverHeight = spineMetrics.heightPx
                 val maxHeightPx = (HOME_SHELF_MAX_HEIGHT_DP * density).toInt()
 

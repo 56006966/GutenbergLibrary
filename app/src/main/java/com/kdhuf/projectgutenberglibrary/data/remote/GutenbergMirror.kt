@@ -6,7 +6,6 @@ import java.net.URI
 object GutenbergMirror {
     private const val DEFAULT_MAIN_HOST = "www.gutenberg.org"
     private const val LEGACY_MAIN_HOST = "gutenberg.org"
-    private const val DEFAULT_MAIN_BASE = "https://www.gutenberg.org/"
     private val MIRROR_HOST_MARKERS = listOf(".pglaf.org", ".gutenberg.org")
     private val fallbackBases = listOf(
         "https://gutenberg.pglaf.org/",
@@ -16,9 +15,11 @@ object GutenbergMirror {
     private val baseUrl: String
         get() = BuildConfig.GUTENBERG_MIRROR_BASE_URL.ensureTrailingSlash()
 
-    fun coverUrl(bookId: Int): String = "${DEFAULT_MAIN_BASE}cache/epub/$bookId/pg$bookId.cover.medium.jpg"
+    fun coverUrl(bookId: Int): String = coverCandidates(bookId).first()
 
-    fun imagesEpubUrl(bookId: Int): String = "${DEFAULT_MAIN_BASE}ebooks/$bookId.epub3.images"
+    fun imagesEpubUrl(bookId: Int): String = imagesEpubCandidates(bookId).first()
+
+    fun readerBaseUrl(): String = baseUrl
 
     fun resolve(url: String?): String? {
         return resolveCandidates(url).firstOrNull()
@@ -56,6 +57,21 @@ object GutenbergMirror {
                 if (normalized != baseUrl) {
                     add(normalized)
                 }
+            }
+        }
+    }
+
+    private fun coverCandidates(bookId: Int): List<String> {
+        return allBaseUrls().map { candidateBase ->
+            "${candidateBase.ensureTrailingSlash()}$bookId/pg$bookId.cover.medium.jpg"
+        }
+    }
+
+    private fun imagesEpubCandidates(bookId: Int): List<String> {
+        return buildList {
+            allBaseUrls().forEach { candidateBase ->
+                add("${candidateBase.ensureTrailingSlash()}$bookId/pg$bookId-images-3.epub")
+                add("${candidateBase.ensureTrailingSlash()}$bookId/pg$bookId-images.epub")
             }
         }
     }

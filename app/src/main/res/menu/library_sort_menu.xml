@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/sort_title_asc"
+        android:title="@string/library_sort_title_asc" />
+    <item
+        android:id="@+id/sort_title_desc"
+        android:title="@string/library_sort_title_desc" />
+    <item
+        android:id="@+id/sort_author_asc"
+        android:title="@string/library_sort_author_asc" />
+    <item
+        android:id="@+id/sort_author_desc"
+        android:title="@string/library_sort_author_desc" />
+    <item
+        android:id="@+id/sort_recent_desc"
+        android:title="@string/library_sort_recent_desc" />
+    <item
+        android:id="@+id/sort_recent_asc"
+        android:title="@string/library_sort_recent_asc" />
+    <item
+        android:id="@+id/sort_popular_desc"
+        android:title="@string/library_sort_popular_desc" />
+    <item
+        android:id="@+id/sort_popular_asc"
+        android:title="@string/library_sort_popular_asc" />
+</menu>

@@ -23,6 +23,7 @@ class LibraryViewModel(
     companion object {
         private const val TAG = "LibraryViewModel"
         private const val CACHE_MAX_AGE_MS = 30L * 60L * 1000L
+        private const val HOME_SHELF_BOOK_COUNT = 50
     }
 
     private val _popularBooks = kotlinx.coroutines.flow.MutableStateFlow(shelfCache.getPopularBooks())
@@ -33,6 +34,8 @@ class LibraryViewModel(
 
     private val _libraryBooks = kotlinx.coroutines.flow.MutableStateFlow<List<BookEntity>>(emptyList())
     val libraryBooks: kotlinx.coroutines.flow.StateFlow<List<BookEntity>> get() = _libraryBooks
+    private val _librarySortMode = kotlinx.coroutines.flow.MutableStateFlow(LibraryShelfSortMode.TITLE_ASC)
+    val librarySortMode: kotlinx.coroutines.flow.StateFlow<LibraryShelfSortMode> get() = _librarySortMode
 
     private val _isLoadingPopular = kotlinx.coroutines.flow.MutableStateFlow(_popularBooks.value.isEmpty())
     val isLoadingPopular: kotlinx.coroutines.flow.StateFlow<Boolean> get() = _isLoadingPopular
@@ -55,9 +58,15 @@ class LibraryViewModel(
     fun loadLibraryBooks() {
         viewModelScope.launch {
             repository.getLibraryBooks().collect { list ->
-                _libraryBooks.value = list.sortedBy { it.title }
+                _libraryBooks.value = LibraryShelfSortLogic.sortBooks(list, _librarySortMode.value)
             }
         }
+    }
+
+    fun setLibrarySortMode(mode: LibraryShelfSortMode) {
+        if (_librarySortMode.value == mode) return
+        _librarySortMode.value = mode
+        _libraryBooks.value = LibraryShelfSortLogic.sortBooks(_libraryBooks.value, mode)
     }
 
     fun toggleFavorite(book: BookEntity) {
@@ -92,7 +101,7 @@ class LibraryViewModel(
             _isLoadingPopular.value = true
             _popularError.value = null
             try {
-                val entities = repository.getOfficialPopularBooks(limit = 12)
+                val entities = repository.getOfficialPopularBooks(limit = HOME_SHELF_BOOK_COUNT)
                 _popularBooks.value = entities
                 shelfCache.savePopularBooks(entities)
                 debugLog(TAG) { "Loaded ${entities.size} popular books" }
@@ -145,7 +154,7 @@ class LibraryViewModel(
             _isLoadingNewest.value = true
             _newestError.value = null
             try {
-                val entities = repository.getOfficialNewestBooks(limit = 12)
+                val entities = repository.getOfficialNewestBooks(limit = HOME_SHELF_BOOK_COUNT)
                 _newestBooks.value = entities
                 shelfCache.saveNewestBooks(entities)
                 debugLog(TAG) { "Loaded ${entities.size} newest books" }

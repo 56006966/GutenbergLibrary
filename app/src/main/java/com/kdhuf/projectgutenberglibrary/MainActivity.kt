@@ -2,9 +2,11 @@ package com.kdhuf.projectgutenberglibrary
 
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.view.MotionEvent
 import android.text.style.ForegroundColorSpan
 import android.os.Bundle
 import android.text.SpannableString
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
@@ -58,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private var drawerAllowedForDestination = false
     private var lastLaunchWallWidth = 0
     private var lastLaunchWallHeight = 0
+    private var openDrawerDragActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,6 +122,7 @@ class MainActivity : AppCompatActivity() {
         binding.openDrawerButton.setOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
         }
+        binding.openDrawerButton.setOnTouchListener(createDrawerDragListener())
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             maybeShowTransitionOverlay(destination.id)
@@ -355,6 +359,64 @@ class MainActivity : AppCompatActivity() {
 
     private fun openUrl(url: String): Boolean {
         return ExternalLinkPolicy.openWithNotice(this, url)
+    }
+
+    private fun createDrawerDragListener(): View.OnTouchListener {
+        val dragThresholdPx = resources.displayMetrics.density * 10f
+        var downRawX = 0f
+        var downRawY = 0f
+        var downTranslationX = 0f
+        var downTranslationY = 0f
+
+        return View.OnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downRawX = event.rawX
+                    downRawY = event.rawY
+                    downTranslationX = view.translationX
+                    downTranslationY = view.translationY
+                    openDrawerDragActive = false
+                    false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.rawX - downRawX
+                    val deltaY = event.rawY - downRawY
+                    if (!openDrawerDragActive &&
+                        (kotlin.math.abs(deltaX) > dragThresholdPx || kotlin.math.abs(deltaY) > dragThresholdPx)
+                    ) {
+                        openDrawerDragActive = true
+                        view.parent.requestDisallowInterceptTouchEvent(true)
+                    }
+                    if (openDrawerDragActive) {
+                        val parent = view.parent as? View ?: return@OnTouchListener true
+                        val minTranslationX = -view.left.toFloat()
+                        val maxTranslationX = (parent.width - view.right).toFloat()
+                        val minTranslationY = -view.top.toFloat()
+                        val maxTranslationY = (parent.height - view.bottom).toFloat()
+
+                        view.translationX = (downTranslationX + deltaX).coerceIn(minTranslationX, maxTranslationX)
+                        view.translationY = (downTranslationY + deltaY).coerceIn(minTranslationY, maxTranslationY)
+                        true
+                    } else {
+                        false
+                    }
+                }
+                MotionEvent.ACTION_UP -> {
+                    val wasDragging = openDrawerDragActive
+                    openDrawerDragActive = false
+                    if (wasDragging) {
+                        true
+                    } else {
+                        false
+                    }
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    openDrawerDragActive = false
+                    false
+                }
+                else -> false
+            }
+        }
     }
 
     private fun applyDrawerTheme(

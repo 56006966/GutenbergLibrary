@@ -44,18 +44,18 @@ internal object HomeShelfInteractionLogic {
         val compactTitle = bookTitle.trim().ifBlank { "Book" }
         val titleLength = compactTitle.length
         val widthDp = when {
-            titleLength >= 42 -> 88
-            titleLength >= 30 -> 80
-            titleLength >= 20 -> 72
-            titleLength >= 12 -> 64
-            else -> 58
+            titleLength >= 42 -> 80
+            titleLength >= 30 -> 74
+            titleLength >= 20 -> 68
+            titleLength >= 12 -> 60
+            else -> 54
         }
         val heightDp = when {
-            titleLength >= 42 -> 186
-            titleLength >= 30 -> 184
-            titleLength >= 20 -> 180
-            titleLength >= 12 -> 178
-            else -> 174
+            titleLength >= 42 -> 182
+            titleLength >= 30 -> 180
+            titleLength >= 20 -> 178
+            titleLength >= 12 -> 176
+            else -> 172
         }
         return HomeShelfMetrics(
             widthDp = widthDp,

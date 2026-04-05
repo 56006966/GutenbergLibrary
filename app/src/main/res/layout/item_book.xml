@@ -6,6 +6,7 @@
     android:layout_width="132dp"
     android:layout_height="wrap_content"
     android:layout_marginEnd="0dp"
+    android:forceDarkAllowed="false"
     app:cardCornerRadius="16dp"
     app:cardElevation="6dp">
 
@@ -95,6 +96,7 @@
                 android:layout_gravity="start"
                 android:background="@drawable/book_spine_background"
                 android:elevation="2dp"
+                android:forceDarkAllowed="false"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:alpha="1"

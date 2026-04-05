@@ -24,11 +24,11 @@ class GutenbergMirrorTest {
     }
 
     @Test
-    fun `cover fallback uses canonical gutenberg url and resolves to mirror-native path`() {
+    fun `cover fallback uses mirror-native cover url`() {
         val coverUrl = GutenbergMirror.coverUrl(84)
         val candidates = GutenbergMirror.resolveCandidates(coverUrl)
 
-        assertEquals("https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg", coverUrl)
+        assertEquals("https://books.phunkypixels.com/84/pg84.cover.medium.jpg", coverUrl)
         assertEquals("https://books.phunkypixels.com/84/pg84.cover.medium.jpg", candidates.first())
     }
 

@@ -71,16 +71,16 @@ class HomeShelfInteractionLogicTest {
         val mediumTitle = HomeShelfInteractionLogic.metricsForTitle("The Time Machine")
         val longTitle = HomeShelfInteractionLogic.metricsForTitle("The Interesting Narrative of the Life of Olaudah Equiano")
 
-        assertEquals(HomeShelfMetrics(widthDp = 58, heightDp = 174), shortTitle)
-        assertEquals(HomeShelfMetrics(widthDp = 64, heightDp = 178), mediumTitle)
-        assertEquals(HomeShelfMetrics(widthDp = 88, heightDp = 186), longTitle)
+        assertEquals(HomeShelfMetrics(widthDp = 54, heightDp = 172), shortTitle)
+        assertEquals(HomeShelfMetrics(widthDp = 60, heightDp = 176), mediumTitle)
+        assertEquals(HomeShelfMetrics(widthDp = 80, heightDp = 182), longTitle)
     }
 
     @Test
     fun `blank title falls back to base shelf metrics`() {
         val metrics = HomeShelfInteractionLogic.metricsForTitle("   ")
 
-        assertEquals(HomeShelfMetrics(widthDp = 58, heightDp = 174), metrics)
+        assertEquals(HomeShelfMetrics(widthDp = 54, heightDp = 172), metrics)
     }
 
     @Test
@@ -94,13 +94,13 @@ class HomeShelfInteractionLogicTest {
         val fortyOneChars = HomeShelfInteractionLogic.metricsForTitle("12345678901234567890123456789012345678901")
         val fortyTwoChars = HomeShelfInteractionLogic.metricsForTitle("123456789012345678901234567890123456789012")
 
-        assertEquals(HomeShelfMetrics(widthDp = 58, heightDp = 174), elevenChars)
-        assertEquals(HomeShelfMetrics(widthDp = 64, heightDp = 178), twelveChars)
-        assertEquals(HomeShelfMetrics(widthDp = 64, heightDp = 178), nineteenChars)
-        assertEquals(HomeShelfMetrics(widthDp = 72, heightDp = 180), twentyChars)
-        assertEquals(HomeShelfMetrics(widthDp = 72, heightDp = 180), twentyNineChars)
-        assertEquals(HomeShelfMetrics(widthDp = 80, heightDp = 184), thirtyChars)
-        assertEquals(HomeShelfMetrics(widthDp = 80, heightDp = 184), fortyOneChars)
-        assertEquals(HomeShelfMetrics(widthDp = 88, heightDp = 186), fortyTwoChars)
+        assertEquals(HomeShelfMetrics(widthDp = 54, heightDp = 172), elevenChars)
+        assertEquals(HomeShelfMetrics(widthDp = 60, heightDp = 176), twelveChars)
+        assertEquals(HomeShelfMetrics(widthDp = 60, heightDp = 176), nineteenChars)
+        assertEquals(HomeShelfMetrics(widthDp = 68, heightDp = 178), twentyChars)
+        assertEquals(HomeShelfMetrics(widthDp = 68, heightDp = 178), twentyNineChars)
+        assertEquals(HomeShelfMetrics(widthDp = 74, heightDp = 180), thirtyChars)
+        assertEquals(HomeShelfMetrics(widthDp = 74, heightDp = 180), fortyOneChars)
+        assertEquals(HomeShelfMetrics(widthDp = 80, heightDp = 182), fortyTwoChars)
     }
 }

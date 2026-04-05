@@ -100,14 +100,14 @@ open class BookRepository(
         return catalogDataSource.getBookDetails(id)
     }
 
-    open suspend fun getOfficialNewestBooks(limit: Int = 12): List<BookEntity> = withContext(Dispatchers.IO) {
+    open suspend fun getOfficialNewestBooks(limit: Int = 50): List<BookEntity> = withContext(Dispatchers.IO) {
         catalogDataSource.getBooks(sort = "newest")
             .results
             .take(limit)
             .map(::mapRemoteBookToShelf)
     }
 
-    open suspend fun getOfficialPopularBooks(limit: Int = 12): List<BookEntity> = withContext(Dispatchers.IO) {
+    open suspend fun getOfficialPopularBooks(limit: Int = 50): List<BookEntity> = withContext(Dispatchers.IO) {
         catalogDataSource.getBooks(sort = "popular")
             .results
             .take(limit)

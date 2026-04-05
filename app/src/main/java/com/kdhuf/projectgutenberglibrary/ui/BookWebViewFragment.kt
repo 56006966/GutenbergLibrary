@@ -837,7 +837,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
         val preservedScrollRatio = pendingScrollRatio
         updateCurrentPageTtsModel()
         pageNavigator?.renderPage(
-            baseUrl = "https://www.gutenberg.org/",
+            baseUrl = GutenbergMirror.readerBaseUrl(),
             html = buildPageHtml(pageBodies[currentPageIndex])
         )
         updateChapterPositionText(currentPageIndex)

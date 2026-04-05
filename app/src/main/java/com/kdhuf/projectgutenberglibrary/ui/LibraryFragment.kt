@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
+import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -33,6 +33,10 @@ class LibraryFragment : Fragment() {
     private val newestAdapter = BookAdapter()
     private val popularAdapter = BookAdapter()
     private val libraryAdapter = BookAdapter()
+    private var newestSortMode = LibraryShelfSortMode.RECENT_DESC
+    private var popularSortMode = LibraryShelfSortMode.RECENT_DESC
+    private var currentNewestBooks: List<BookEntity> = emptyList()
+    private var currentPopularBooks: List<BookEntity> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,6 +53,7 @@ class LibraryFragment : Fragment() {
         setupRecyclerViews()
         setupViewModel()
         applyLibraryTheme()
+        setupSortButtons()
         binding.libraryThemeButton.setOnClickListener {
             uiPreferences.setDarkModeEnabled(!uiPreferences.isDarkModeEnabled())
             applyLibraryTheme()
@@ -111,6 +116,68 @@ class LibraryFragment : Fragment() {
         )[LibraryViewModel::class.java]
     }
 
+    private fun setupSortButtons() {
+        binding.librarySortButton.setOnClickListener { anchor ->
+            showSortMenu(anchor) { mode -> viewModel.setLibrarySortMode(mode) }
+        }
+        binding.newestSortButton.setOnClickListener { anchor ->
+            showSortMenu(anchor) { mode ->
+                newestSortMode = mode
+                binding.newestSortButton.text = labelForSortMode(mode)
+                submitNewestBooks()
+            }
+        }
+        binding.popularSortButton.setOnClickListener { anchor ->
+            showSortMenu(anchor) { mode ->
+                popularSortMode = mode
+                binding.popularSortButton.text = labelForSortMode(mode)
+                submitPopularBooks()
+            }
+        }
+    }
+
+    private fun showSortMenu(anchor: View, onModeSelected: (LibraryShelfSortMode) -> Unit) {
+        PopupMenu(requireContext(), anchor).apply {
+            inflate(R.menu.library_sort_menu)
+            setOnMenuItemClickListener { item ->
+                val mode = when (item.itemId) {
+                    R.id.sort_title_asc -> LibraryShelfSortMode.TITLE_ASC
+                    R.id.sort_title_desc -> LibraryShelfSortMode.TITLE_DESC
+                    R.id.sort_author_asc -> LibraryShelfSortMode.AUTHOR_ASC
+                    R.id.sort_author_desc -> LibraryShelfSortMode.AUTHOR_DESC
+                    R.id.sort_recent_desc -> LibraryShelfSortMode.RECENT_DESC
+                    R.id.sort_recent_asc -> LibraryShelfSortMode.RECENT_ASC
+                    R.id.sort_popular_desc -> LibraryShelfSortMode.POPULAR_DESC
+                    R.id.sort_popular_asc -> LibraryShelfSortMode.POPULAR_ASC
+                    else -> return@setOnMenuItemClickListener false
+                }
+                onModeSelected(mode)
+                true
+            }
+        }.show()
+    }
+
+    private fun labelForSortMode(mode: LibraryShelfSortMode): String {
+        return when (mode) {
+            LibraryShelfSortMode.TITLE_ASC -> getString(R.string.library_sort_title_asc)
+            LibraryShelfSortMode.TITLE_DESC -> getString(R.string.library_sort_title_desc)
+            LibraryShelfSortMode.AUTHOR_ASC -> getString(R.string.library_sort_author_asc)
+            LibraryShelfSortMode.AUTHOR_DESC -> getString(R.string.library_sort_author_desc)
+            LibraryShelfSortMode.RECENT_DESC -> getString(R.string.library_sort_recent_desc)
+            LibraryShelfSortMode.RECENT_ASC -> getString(R.string.library_sort_recent_asc)
+            LibraryShelfSortMode.POPULAR_DESC -> getString(R.string.library_sort_popular_desc)
+            LibraryShelfSortMode.POPULAR_ASC -> getString(R.string.library_sort_popular_asc)
+        }
+    }
+
+    private fun submitNewestBooks() {
+        newestAdapter.submitList(LibraryShelfSortLogic.sortBooks(currentNewestBooks, newestSortMode))
+    }
+
+    private fun submitPopularBooks() {
+        popularAdapter.submitList(LibraryShelfSortLogic.sortBooks(currentPopularBooks, popularSortMode))
+    }
+
     private fun applyLibraryTheme() {
         val darkModeEnabled = uiPreferences.isDarkModeEnabled()
         val text = Color.parseColor(
@@ -146,6 +213,10 @@ class LibraryFragment : Fragment() {
         newestAdapter.setDarkMode(darkModeEnabled)
         popularAdapter.setDarkMode(darkModeEnabled)
         libraryAdapter.setDarkMode(darkModeEnabled)
+        listOf(binding.librarySortButton, binding.newestSortButton, binding.popularSortButton).forEach { button ->
+            button.setTextColor(Color.parseColor("#2A180D"))
+            button.iconTint = android.content.res.ColorStateList.valueOf(Color.parseColor("#2A180D"))
+        }
         binding.libraryThemeButton.apply {
             setImageResource(if (darkModeEnabled) R.drawable.ic_theme_sun else R.drawable.ic_theme_moon)
             imageTintList = android.content.res.ColorStateList.valueOf(text)
@@ -157,23 +228,30 @@ class LibraryFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.newestBooks.collect { books ->
-                        newestAdapter.submitList(books)
+                        currentNewestBooks = books
+                        submitNewestBooks()
                         binding.newestEmptyText.visibility =
                             if (books.isEmpty() && !viewModel.isLoadingNewest.value) View.VISIBLE else View.GONE
                     }
                 }
                 launch {
                     viewModel.popularBooks.collect { books ->
-                        popularAdapter.submitList(books)
+                        currentPopularBooks = books
+                        submitPopularBooks()
                         binding.popularEmptyText.visibility =
                             if (books.isEmpty() && !viewModel.isLoadingPopular.value) View.VISIBLE else View.GONE
                     }
                 }
                 launch {
                     viewModel.libraryBooks.collect { books ->
-                        libraryAdapter.submitList(books.sortedBy { it.title })
+                        libraryAdapter.submitList(books)
                         binding.libraryEmptyText.visibility =
                             if (books.isEmpty()) View.VISIBLE else View.GONE
+                    }
+                }
+                launch {
+                    viewModel.librarySortMode.collect { sortMode ->
+                        binding.librarySortButton.text = labelForSortMode(sortMode)
                     }
                 }
                 launch {
