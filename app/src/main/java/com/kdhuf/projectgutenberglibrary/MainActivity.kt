@@ -15,14 +15,10 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
-import com.kdhuf.projectgutenberglibrary.data.local.BookDatabase
 import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
-import com.kdhuf.projectgutenberglibrary.data.local.ShelfCachePolicy
-import com.kdhuf.projectgutenberglibrary.data.local.ShelfCache
-import com.kdhuf.projectgutenberglibrary.data.remote.RetrofitInstance
-import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import com.kdhuf.projectgutenberglibrary.databinding.ActivityMainBinding
 import com.kdhuf.projectgutenberglibrary.ui.ExternalLinkPolicy
+import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallCuratedBooks
 import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallLayoutLogic
 import com.kdhuf.projectgutenberglibrary.ui.LaunchTileWallStartupLogic
 import com.kdhuf.projectgutenberglibrary.ui.OverlayTransitionLogic
@@ -30,8 +26,6 @@ import com.kdhuf.projectgutenberglibrary.ui.OverlayAnimationSpec
 import com.kdhuf.projectgutenberglibrary.ui.ReaderUiPalette
 import com.kdhuf.projectgutenberglibrary.ui.ReaderUiPreferences
 import com.kdhuf.projectgutenberglibrary.ui.SearchOptionsFragment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -63,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     private var openDrawerDragActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_ProjectGutenberg_NoActionBar)
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -195,34 +190,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun preloadTileWallCovers() {
-        val shelfCache = ShelfCache(this)
-        val repository = BookRepository(
-            BookDatabase.getDatabase(this).bookDao(),
-            RetrofitInstance.catalogDataSource
-        )
-
-        val cachedBooks = shelfCache.getTopDownloadedBooks()
-        if (cachedBooks.isNotEmpty()) {
-            updateLaunchWallBooks(cachedBooks)
-        }
-
-        lifecycleScope.launch {
-            if (shelfCache.hasTopDownloadedBooks() &&
-                shelfCache.isTopDownloadedCacheFresh(ShelfCachePolicy.TOP_DOWNLOADED_MAX_AGE_MS)
-            ) {
-                return@launch
-            }
-
-            val topBooksDeferred = async(Dispatchers.IO) {
-                runCatching { repository.getTopDownloadedBooks(limit = 100) }.getOrNull().orEmpty()
-            }
-
-            val books = topBooksDeferred.await()
-            if (books.isNotEmpty()) {
-                shelfCache.saveTopDownloadedBooks(books)
-                updateLaunchWallBooks(books)
-            }
-        }
+        updateLaunchWallBooks(LaunchTileWallCuratedBooks.books())
     }
 
     private fun restoreActivityState(savedInstanceState: Bundle?) {

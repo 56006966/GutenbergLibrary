@@ -4,6 +4,7 @@ import android.content.Context
 import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.kdhuf.projectgutenberglibrary.ui.BookMetadataFormatter
 
 class ShelfCache(context: Context) : ShelfCacheStore {
 
@@ -56,13 +57,25 @@ class ShelfCache(context: Context) : ShelfCacheStore {
                         ?: GutenbergMirror.coverUrl(book.id)
                 )
             }
+            .dedupeWorks()
     }
 
     private fun saveBooks(dataKey: String, timestampKey: String, books: List<BookEntity>) {
+        val dedupedBooks = books.dedupeWorks()
         prefs.edit()
-            .putString(dataKey, gson.toJson(books, listType))
+            .putString(dataKey, gson.toJson(dedupedBooks, listType))
             .putLong(timestampKey, System.currentTimeMillis())
             .apply()
+    }
+
+    private fun List<BookEntity>.dedupeWorks(): List<BookEntity> {
+        return distinctBy { book ->
+            val normalizedTitle = BookMetadataFormatter.normalizeTitle(book.title)
+                .lowercase()
+                .trim()
+            val normalizedAuthor = book.author.lowercase().trim()
+            "$normalizedTitle|$normalizedAuthor"
+        }
     }
 
     private fun isCacheFresh(timestampKey: String, maxAgeMs: Long): Boolean {

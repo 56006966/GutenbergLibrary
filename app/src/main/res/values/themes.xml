@@ -11,11 +11,12 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:windowBackground">#F3E7D2</item>
         <item name="android:forceDarkAllowed">false</item>
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="Theme.ProjectGutenberg.NoActionBar">
+    <style name="Theme.ProjectGutenberg.NoActionBar" parent="Theme.ProjectGutenberg">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
@@ -29,4 +30,6 @@
     <style name="Theme.ProjectGutenberg.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.ProjectGutenberg.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="Theme.ProjectGutenberg.PopupOverlay.Dark" parent="ThemeOverlay.AppCompat.Dark" />
 </resources>

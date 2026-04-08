@@ -1369,7 +1369,7 @@ class BookWebViewFragment : Fragment(), ReaderTtsControllerListener {
     private fun BookDto.toLibraryEntity(): BookEntity {
         return BookEntity(
             id = id,
-            title = title,
+            title = BookMetadataFormatter.normalizeTitle(title),
             author = authors.joinToString { it.name },
             genre = subjects?.firstOrNull() ?: "Unknown",
             downloads = download_count,

@@ -7,6 +7,7 @@ import com.kdhuf.projectgutenberglibrary.data.local.BookEntity
 import com.kdhuf.projectgutenberglibrary.data.remote.BookDto
 import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergResponse
+import com.kdhuf.projectgutenberglibrary.ui.BookMetadataFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -81,7 +82,7 @@ open class BookRepository(
     open fun mapRemoteBookToShelf(dto: BookDto): BookEntity {
         return BookEntity(
             id = dto.id,
-            title = dto.title,
+            title = BookMetadataFormatter.normalizeTitle(dto.title),
             author = dto.authors.joinToString { it.name }.ifBlank { PROJECT_GUTENBERG_AUTHOR },
             genre = dto.subjects?.firstOrNull() ?: CLASSIC_LITERATURE_GENRE,
             downloads = dto.download_count,
@@ -96,23 +97,50 @@ open class BookRepository(
         )
     }
 
+    private fun workKey(book: BookEntity): String {
+        val normalizedTitle = BookMetadataFormatter.normalizeTitle(book.title).lowercase()
+        val normalizedAuthor = book.author.trim().lowercase()
+        return "$normalizedTitle|$normalizedAuthor"
+    }
+
+    private suspend fun getOfficialShelfBooks(sort: String, limit: Int): List<BookEntity> =
+        withContext(Dispatchers.IO) {
+            val uniqueBooks = linkedMapOf<String, BookEntity>()
+            val seenIds = mutableSetOf<Int>()
+            var nextPageUrl: String? = null
+            var pagesFetched = 0
+
+            while (uniqueBooks.size < limit && pagesFetched < 8) {
+                val response = if (nextPageUrl.isNullOrBlank()) {
+                    catalogDataSource.getBooks(sort = sort)
+                } else {
+                    catalogDataSource.getBooksPage(nextPageUrl)
+                }
+                pagesFetched += 1
+
+                response.results
+                    .map(::mapRemoteBookToShelf)
+                    .forEach { book ->
+                        if (!seenIds.add(book.id)) return@forEach
+                        uniqueBooks.putIfAbsent(workKey(book), book)
+                    }
+
+                if (response.next.isNullOrBlank()) break
+                nextPageUrl = response.next
+            }
+
+            uniqueBooks.values.take(limit)
+        }
+
     open suspend fun getBookDetails(id: Int): BookDto {
         return catalogDataSource.getBookDetails(id)
     }
 
-    open suspend fun getOfficialNewestBooks(limit: Int = 50): List<BookEntity> = withContext(Dispatchers.IO) {
-        catalogDataSource.getBooks(sort = "newest")
-            .results
-            .take(limit)
-            .map(::mapRemoteBookToShelf)
-    }
+    open suspend fun getOfficialNewestBooks(limit: Int = 50): List<BookEntity> =
+        getOfficialShelfBooks(sort = "newest", limit = limit)
 
-    open suspend fun getOfficialPopularBooks(limit: Int = 50): List<BookEntity> = withContext(Dispatchers.IO) {
-        catalogDataSource.getBooks(sort = "popular")
-            .results
-            .take(limit)
-            .map(::mapRemoteBookToShelf)
-    }
+    open suspend fun getOfficialPopularBooks(limit: Int = 50): List<BookEntity> =
+        getOfficialShelfBooks(sort = "popular", limit = limit)
 
     open suspend fun getTopDownloadedBooks(limit: Int = 100): List<BookEntity> = withContext(Dispatchers.IO) {
         val collected = mutableListOf<BookEntity>()

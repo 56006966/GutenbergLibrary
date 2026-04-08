@@ -7,7 +7,7 @@ It serves a Gutendex-compatible subset of endpoints:
 - `GET /books`
 - `GET /books/{id}`
 
-The backend reads from a TSV catalog file so you can swap in your own mirror-fed dataset later.
+The backend reads from a TSV catalog file built from offline Project Gutenberg metadata plus an optional popularity snapshot.
 
 ## Default Data File
 
@@ -132,8 +132,45 @@ Notes:
 
 - the importer scans recursively for `.rdf` files
 - it extracts title, release date, authors, subjects, languages, bookshelves, and common format URLs
-- `download_count` currently defaults to `0` because Project Gutenberg RDF metadata does not carry Gutendex-style popularity counts
+- `Newest Releases` comes from the mirrored RDF `release_date`, which matches Project Gutenberg's machine-readable metadata guidance
+- `download_count` comes from an optional popularity snapshot file because Project Gutenberg RDF metadata does not carry popularity counts
 - books without an EPUB URL are skipped during import so the catalog only includes titles that can be opened as EPUBs
+
+## Popularity Snapshot
+
+To build a real `Most Popular` shelf, refresh a snapshot from Project Gutenberg's official popularity listing:
+
+```powershell
+.\scripts\refresh-popularity-snapshot.ps1
+```
+
+This writes:
+
+`backend/data/popular_books.tsv`
+
+Format:
+
+```text
+ebook_id    download_count
+```
+
+The importer automatically merges that file when `CATALOG_POPULARITY_INPUT` is set, or when `backend/data/popular_books.tsv` exists in the default local-mirror flow.
+
+## One-Step Offline Build
+
+For the intended end-to-end workflow:
+
+```powershell
+$env:PG_MIRROR_GENERATED_DIR="C:\gutenberg\generated"
+$env:CATALOG_REFRESH_POPULARITY="1"
+.\scripts\build-offline-catalog.ps1
+```
+
+That flow:
+
+- refreshes the official popularity snapshot for `Most Popular`
+- imports mirrored RDF metadata for `Newest Releases`
+- writes the merged offline catalog to `backend/data/catalog.tsv`
 
 ## Supported Query Parameters
 
@@ -145,9 +182,11 @@ Notes:
 - `mime_type`
 - `page`
 
-## Next Step
+## Data Source Summary
 
-Replace the sample TSV with data produced from your own mirror/catalog import pipeline.
+- `Newest Releases`: mirrored RDF metadata sorted by Project Gutenberg `release_date`
+- `Most Popular`: official popularity snapshot merged into the offline catalog
+- offline app shelves: cached copies of those backend responses
 
 For public deployment behind HTTPS, see:
 

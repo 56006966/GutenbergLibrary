@@ -58,6 +58,42 @@ class BookRepositoryTest {
     }
 
     @Test
+    fun `getOfficialPopularBooks de duplicates same work across duplicate records`() = runTest {
+        catalogDataSource.booksResponse = GutenbergResponse(
+            results = listOf(
+                BookDto(id = 111, title = "Paradise Lost", authors = listOf(AuthorDto("John Milton")), download_count = 1000),
+                BookDto(id = 222, title = "Paradise Lost", authors = listOf(AuthorDto("John Milton")), download_count = 900),
+                BookDto(id = 333, title = "Far from the Madding Crowd", authors = listOf(AuthorDto("Thomas Hardy")), download_count = 800)
+            )
+        )
+
+        val books = repository.getOfficialPopularBooks(limit = 10)
+
+        assertEquals(listOf(111, 333), books.map { it.id })
+    }
+
+    @Test
+    fun `getOfficialPopularBooks uses next page to fill unique shelf after duplicates`() = runTest {
+        catalogDataSource.booksResponse = GutenbergResponse(
+            results = listOf(
+                BookDto(id = 111, title = "Paradise Lost", authors = listOf(AuthorDto("John Milton")), download_count = 1000),
+                BookDto(id = 222, title = "Paradise Lost", authors = listOf(AuthorDto("John Milton")), download_count = 900)
+            ),
+            next = "https://catalog.example.test/books?sort=popular&page=2"
+        )
+        catalogDataSource.pageResponse = GutenbergResponse(
+            results = listOf(
+                BookDto(id = 333, title = "Far from the Madding Crowd", authors = listOf(AuthorDto("Thomas Hardy")), download_count = 800)
+            )
+        )
+
+        val books = repository.getOfficialPopularBooks(limit = 2)
+
+        assertEquals(listOf(111, 333), books.map { it.id })
+        assertEquals("https://catalog.example.test/books?sort=popular&page=2", catalogDataSource.lastPageUrl)
+    }
+
+    @Test
     fun `mapRemoteBookToShelf uses metadata from dto when available`() {
         val dto = BookDto(
             id = 1342,
@@ -116,8 +152,8 @@ class BookRepositoryTest {
     }
 
     private class TrackingCatalogDataSource : CatalogDataSource {
-        val booksResponse = GutenbergResponse(results = listOf(BookDto(id = 1, title = "Popular page")))
-        val pageResponse = GutenbergResponse(results = listOf(BookDto(id = 2, title = "Explicit page")))
+        var booksResponse = GutenbergResponse(results = listOf(BookDto(id = 1, title = "Popular page")))
+        var pageResponse = GutenbergResponse(results = listOf(BookDto(id = 2, title = "Explicit page")))
         var lastSort: String? = null
         var lastPageUrl: String? = null
 

@@ -123,9 +123,10 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
     ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root) {
 
         fun bind(book: BookEntity) {
-            binding.bookTitle.text = book.title
-            binding.bookOverlayTitle.text = book.title
-            binding.bookSpineTitle.text = book.title
+            val normalizedTitle = BookMetadataFormatter.normalizeTitle(book.title)
+            binding.bookTitle.text = normalizedTitle
+            binding.bookOverlayTitle.text = normalizedTitle
+            binding.bookSpineTitle.text = normalizedTitle
             applyPresentationLayout(book)
             applyCardTheme(book)
             loadCover(book)
@@ -195,7 +196,8 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                     Color.parseColor(if (darkModeEnabled) "#161616" else "#F2EEE7")
                 )
             } else if (presentationMode == PresentationMode.HOME_SHELF) {
-                val spineMetrics = homeShelfMetrics(bookTitle = book.title, density = density)
+                val normalizedTitle = BookMetadataFormatter.normalizeTitle(book.title)
+                val spineMetrics = homeShelfMetrics(bookTitle = normalizedTitle, density = density)
                 val spineWidth = spineMetrics.widthPx
                 val coverWidth = (108 * density).toInt()
                 val coverHeight = spineMetrics.heightPx

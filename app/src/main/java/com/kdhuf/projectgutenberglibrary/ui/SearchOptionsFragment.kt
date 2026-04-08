@@ -229,7 +229,7 @@ class SearchOptionsFragment : Fragment(R.layout.fragment_search_options) {
     private fun BookDto.toSearchEntity(): BookEntity {
         return BookEntity(
             id = id,
-            title = title,
+            title = BookMetadataFormatter.normalizeTitle(title),
             author = authors.joinToString { it.name },
             genre = subjects?.firstOrNull() ?: "Unknown",
             downloads = download_count,

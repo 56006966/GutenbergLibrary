@@ -17,6 +17,7 @@ import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.repository.BookRepository
 import com.kdhuf.projectgutenberglibrary.databinding.FragmentTransformBinding
 import com.kdhuf.projectgutenberglibrary.databinding.ItemTransformBinding
+import com.kdhuf.projectgutenberglibrary.ui.BookMetadataFormatter
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import com.kdhuf.projectgutenberglibrary.data.remote.RetrofitInstance
@@ -115,7 +116,7 @@ class TransformFragment : Fragment() {
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(book: BookEntity) {
-            binding.textViewItemTransform.text = book.title
+            binding.textViewItemTransform.text = BookMetadataFormatter.normalizeTitle(book.title)
 
             binding.imageViewItemTransform.load(
                 book.coverPath?.takeIf { it.isNotBlank() }

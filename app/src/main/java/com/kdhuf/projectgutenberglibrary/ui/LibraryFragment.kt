@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -34,7 +35,7 @@ class LibraryFragment : Fragment() {
     private val popularAdapter = BookAdapter()
     private val libraryAdapter = BookAdapter()
     private var newestSortMode = LibraryShelfSortMode.RECENT_DESC
-    private var popularSortMode = LibraryShelfSortMode.RECENT_DESC
+    private var popularSortMode = LibraryShelfSortMode.POPULAR_DESC
     private var currentNewestBooks: List<BookEntity> = emptyList()
     private var currentPopularBooks: List<BookEntity> = emptyList()
 
@@ -78,7 +79,10 @@ class LibraryFragment : Fragment() {
 
         val openBook: (BookEntity) -> Unit = { book ->
             val action = LibraryFragmentDirections
-                .actionLibraryFragmentToBookWebViewFragment(book.id, book.title)
+                .actionLibraryFragmentToBookWebViewFragment(
+                    book.id,
+                    BookMetadataFormatter.normalizeTitle(book.title)
+                )
             findNavController().navigate(action)
         }
 
@@ -103,7 +107,7 @@ class LibraryFragment : Fragment() {
         val shelfCache = ShelfCache(requireContext())
 
         viewModel = androidx.lifecycle.ViewModelProvider(
-            this,
+            requireActivity(),
             object : androidx.lifecycle.ViewModelProvider.Factory {
                 override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                     if (modelClass.isAssignableFrom(LibraryViewModel::class.java)) {
@@ -118,17 +122,17 @@ class LibraryFragment : Fragment() {
 
     private fun setupSortButtons() {
         binding.librarySortButton.setOnClickListener { anchor ->
-            showSortMenu(anchor) { mode -> viewModel.setLibrarySortMode(mode) }
+            showSortMenu(anchor, SortMenuScope.LIBRARY) { mode -> viewModel.setLibrarySortMode(mode) }
         }
         binding.newestSortButton.setOnClickListener { anchor ->
-            showSortMenu(anchor) { mode ->
+            showSortMenu(anchor, SortMenuScope.NEWEST) { mode ->
                 newestSortMode = mode
                 binding.newestSortButton.text = labelForSortMode(mode)
                 submitNewestBooks()
             }
         }
         binding.popularSortButton.setOnClickListener { anchor ->
-            showSortMenu(anchor) { mode ->
+            showSortMenu(anchor, SortMenuScope.POPULAR) { mode ->
                 popularSortMode = mode
                 binding.popularSortButton.text = labelForSortMode(mode)
                 submitPopularBooks()
@@ -136,9 +140,19 @@ class LibraryFragment : Fragment() {
         }
     }
 
-    private fun showSortMenu(anchor: View, onModeSelected: (LibraryShelfSortMode) -> Unit) {
-        PopupMenu(requireContext(), anchor).apply {
+    private fun showSortMenu(
+        anchor: View,
+        scope: SortMenuScope,
+        onModeSelected: (LibraryShelfSortMode) -> Unit
+    ) {
+        val popupTheme = if (uiPreferences.isDarkModeEnabled()) {
+            R.style.Theme_ProjectGutenberg_PopupOverlay_Dark
+        } else {
+            R.style.Theme_ProjectGutenberg_PopupOverlay
+        }
+        PopupMenu(ContextThemeWrapper(requireContext(), popupTheme), anchor).apply {
             inflate(R.menu.library_sort_menu)
+            pruneMenuForScope(menu, scope)
             setOnMenuItemClickListener { item ->
                 val mode = when (item.itemId) {
                     R.id.sort_title_asc -> LibraryShelfSortMode.TITLE_ASC
@@ -155,6 +169,20 @@ class LibraryFragment : Fragment() {
                 true
             }
         }.show()
+    }
+
+    private fun pruneMenuForScope(menu: android.view.Menu, scope: SortMenuScope) {
+        when (scope) {
+            SortMenuScope.LIBRARY -> Unit
+            SortMenuScope.NEWEST -> {
+                menu.removeItem(R.id.sort_popular_desc)
+                menu.removeItem(R.id.sort_popular_asc)
+            }
+            SortMenuScope.POPULAR -> {
+                menu.removeItem(R.id.sort_recent_desc)
+                menu.removeItem(R.id.sort_recent_asc)
+            }
+        }
     }
 
     private fun labelForSortMode(mode: LibraryShelfSortMode): String {
@@ -186,6 +214,9 @@ class LibraryFragment : Fragment() {
         val secondary = Color.parseColor(
             if (darkModeEnabled) ReaderUiPalette.DARK_SECONDARY_TEXT else ReaderUiPalette.LIGHT_SECONDARY_TEXT
         )
+        val buttonBackground = Color.parseColor(
+            if (darkModeEnabled) ReaderUiPalette.DARK_BUTTON else ReaderUiPalette.LIGHT_BUTTON
+        )
 
         binding.libraryRoot.setBackgroundResource(
             if (darkModeEnabled) R.drawable.wood_library_background_dark else R.drawable.wood_library_background
@@ -214,8 +245,10 @@ class LibraryFragment : Fragment() {
         popularAdapter.setDarkMode(darkModeEnabled)
         libraryAdapter.setDarkMode(darkModeEnabled)
         listOf(binding.librarySortButton, binding.newestSortButton, binding.popularSortButton).forEach { button ->
-            button.setTextColor(Color.parseColor("#2A180D"))
-            button.iconTint = android.content.res.ColorStateList.valueOf(Color.parseColor("#2A180D"))
+            button.backgroundTintList = android.content.res.ColorStateList.valueOf(buttonBackground)
+            button.strokeColor = android.content.res.ColorStateList.valueOf(secondary)
+            button.setTextColor(text)
+            button.iconTint = android.content.res.ColorStateList.valueOf(text)
         }
         binding.libraryThemeButton.apply {
             setImageResource(if (darkModeEnabled) R.drawable.ic_theme_sun else R.drawable.ic_theme_moon)
@@ -292,6 +325,12 @@ class LibraryFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+}
+
+private enum class SortMenuScope {
+    LIBRARY,
+    NEWEST,
+    POPULAR
 }
 
 class HorizontalSpaceItemDecoration(private val space: Int) : RecyclerView.ItemDecoration() {
