@@ -169,10 +169,45 @@ class LibraryViewModelTest {
         assertEquals(false, repository.lastFavoriteUpdate?.second)
     }
 
+    @Test
+    fun `toggleSaveForLater marks library book as to read`() = runTest {
+        val repository = TrackingBookRepository()
+        val book = sampleBook(56, status = BookEntity.STATUS_LIBRARY)
+
+        val viewModel = LibraryViewModel(
+            repository = repository,
+            shelfCache = FakeShelfCacheStore(),
+            networkChecker = { false }
+        )
+        viewModel.toggleSaveForLater(book)
+        advanceUntilIdle()
+
+        assertEquals(56, repository.lastStatusUpdate?.first)
+        assertEquals(BookEntity.STATUS_TO_READ, repository.lastStatusUpdate?.second)
+    }
+
+    @Test
+    fun `toggleSaveForLater restores saved book to library`() = runTest {
+        val repository = TrackingBookRepository()
+        val book = sampleBook(57, status = BookEntity.STATUS_TO_READ)
+
+        val viewModel = LibraryViewModel(
+            repository = repository,
+            shelfCache = FakeShelfCacheStore(),
+            networkChecker = { false }
+        )
+        viewModel.toggleSaveForLater(book)
+        advanceUntilIdle()
+
+        assertEquals(57, repository.lastStatusUpdate?.first)
+        assertEquals(BookEntity.STATUS_LIBRARY, repository.lastStatusUpdate?.second)
+    }
+
     private fun sampleBook(
         id: Int,
         title: String = "Sample",
-        favorite: Boolean = false
+        favorite: Boolean = false,
+        status: String = BookEntity.STATUS_LIBRARY
     ) = BookEntity(
         id = id,
         title = title,
@@ -182,7 +217,7 @@ class LibraryViewModelTest {
         coverUrl = null,
         text = null,
         isFavorite = favorite,
-        status = BookEntity.STATUS_LIBRARY
+        status = status
     )
 
     private class TrackingBookRepository(
@@ -194,6 +229,7 @@ class LibraryViewModelTest {
         var popularRequested = false
         var newestRequested = false
         var lastFavoriteUpdate: Pair<Int, Boolean>? = null
+        var lastStatusUpdate: Pair<Int, String>? = null
 
         override suspend fun getOfficialPopularBooks(limit: Int): List<BookEntity> {
             popularRequested = true
@@ -209,6 +245,10 @@ class LibraryViewModelTest {
 
         override suspend fun updateFavorite(id: Int, isFavorite: Boolean) {
             lastFavoriteUpdate = id to isFavorite
+        }
+
+        override suspend fun updateStatus(id: Int, status: String) {
+            lastStatusUpdate = id to status
         }
     }
 
@@ -251,6 +291,7 @@ class LibraryViewModelTest {
         override fun getNewestReleases(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun getAllBooks(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun getBooksByStatus(status: String): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun getBooksByStatuses(statuses: List<String>): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun sortByTitle(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun sortByDownloads(): Flow<List<BookEntity>> = flowOf(emptyList())
         override suspend fun updateStatus(id: Int, status: String) = Unit

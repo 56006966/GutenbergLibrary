@@ -32,7 +32,9 @@ open class BookRepository(
 
     open fun getPopularBooks(): Flow<List<BookEntity>> = dao.getPopularBooks()
 
-    open fun getLibraryBooks(): Flow<List<BookEntity>> = dao.getBooksByStatus(BookEntity.STATUS_LIBRARY)
+    open fun getLibraryBooks(): Flow<List<BookEntity>> = dao.getBooksByStatuses(
+        listOf(BookEntity.STATUS_LIBRARY, BookEntity.STATUS_TO_READ)
+    )
 
     open suspend fun insertBook(book: BookEntity) = dao.insert(book)
 
@@ -165,7 +167,7 @@ open class BookRepository(
         collected.take(limit)
     }
 
-    suspend fun updateStatus(id: Int, status: String) {
+    open suspend fun updateStatus(id: Int, status: String) {
         dao.updateStatus(id, status)
     }
 

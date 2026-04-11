@@ -33,6 +33,7 @@ class MyLibraryFragment : Fragment() {
     private sealed interface LibraryFilter {
         data object All : LibraryFilter
         data object Favorites : LibraryFilter
+        data object SaveForLater : LibraryFilter
         data object DownloadedNewest : LibraryFilter
         data object DownloadedOldest : LibraryFilter
         data class Genre(val value: String) : LibraryFilter
@@ -120,6 +121,7 @@ class MyLibraryFragment : Fragment() {
             findNavController().navigate(action)
         }
         libraryAdapter.onFavoriteClick = { book -> viewModel.toggleFavorite(book) }
+        libraryAdapter.onSaveForLaterClick = { book -> viewModel.toggleSaveForLater(book) }
         libraryAdapter.onRemoveClick = { book -> viewModel.removeFromLibrary(book) }
     }
 
@@ -182,6 +184,7 @@ class MyLibraryFragment : Fragment() {
         filterOptions = buildList {
             add(LibraryFilter.All to getString(R.string.library_filter_all))
             add(LibraryFilter.Favorites to getString(R.string.library_filter_favorites))
+            add(LibraryFilter.SaveForLater to getString(R.string.library_filter_save_for_later))
             add(LibraryFilter.DownloadedNewest to getString(R.string.library_filter_downloaded_newest))
             add(LibraryFilter.DownloadedOldest to getString(R.string.library_filter_downloaded_oldest))
             books.mapNotNull { it.genre.takeIf(String::isNotBlank) }
@@ -235,6 +238,7 @@ class MyLibraryFragment : Fragment() {
         val filtered = when (val filter = selectedLibraryFilter) {
             LibraryFilter.All -> books.sortedBy { it.title }
             LibraryFilter.Favorites -> books.filter { it.isFavorite }.sortedBy { it.title }
+            LibraryFilter.SaveForLater -> books.filter { it.status == BookEntity.STATUS_TO_READ }.sortedBy { it.title }
             LibraryFilter.DownloadedNewest -> books.sortedByDescending { it.downloadedAt }
             LibraryFilter.DownloadedOldest -> books.sortedBy { it.downloadedAt.takeIf { value -> value > 0L } ?: Long.MAX_VALUE }
             is LibraryFilter.Genre -> books.filter { it.genre.equals(filter.value, ignoreCase = true) }.sortedBy { it.title }

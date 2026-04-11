@@ -57,6 +57,7 @@ class LaunchTileWallView @JvmOverloads constructor(
     private var segmentHeightPx = 0f
     private var scrollOffsetPx = 0f
     private val wallShuffleSeed = Random.nextInt()
+    private var tileBindSequence = 0
 
     private val startupCoverIds = LaunchTileWallCuratedBooks.books().map { it.id }
 
@@ -220,6 +221,7 @@ class LaunchTileWallView @JvmOverloads constructor(
         }
 
         stopAnimation()
+        tileBindSequence = 0
         scrollStrip.removeAllViews()
 
         val visibleRows = computeVisibleRows()
@@ -382,39 +384,59 @@ class LaunchTileWallView @JvmOverloads constructor(
             setPadding(inset, inset, inset, inset)
         }
 
-        val url = preferredLaunchWallCover(book)
-        val fallbackUrl = GutenbergMirror.coverUrl(book.id)
-        if (!url.isNullOrBlank()) {
-            image.load(url) {
-                crossfade(false)
-                placeholder(R.drawable.icon)
-                error(R.drawable.icon)
-                size(Size(tileSize, tileSize))
-                scale(Scale.FILL)
-                memoryCachePolicy(CachePolicy.ENABLED)
-                diskCachePolicy(CachePolicy.ENABLED)
-                networkCachePolicy(CachePolicy.ENABLED)
-                listener(
-                    onError = { _, _ ->
-                        if (url != fallbackUrl) {
-                            image.load(fallbackUrl) {
-                                crossfade(false)
-                                placeholder(R.drawable.icon)
-                                error(R.drawable.icon)
-                                size(Size(tileSize, tileSize))
-                                scale(Scale.FILL)
-                                memoryCachePolicy(CachePolicy.ENABLED)
-                                diskCachePolicy(CachePolicy.ENABLED)
-                                networkCachePolicy(CachePolicy.ENABLED)
-                            }
-                        }
-                    }
-                )
-            }
-        }
+        loadTileCoverDeferred(
+            image = image,
+            book = book,
+            tileSize = tileSize,
+            delayMs = ((tileBindSequence++ % 18) * 28L)
+        )
 
         card.addView(image)
         return card
+    }
+
+    private fun loadTileCoverDeferred(
+        image: ImageView,
+        book: BookEntity,
+        tileSize: Int,
+        delayMs: Long
+    ) {
+        val url = preferredLaunchWallCover(book)
+        val fallbackUrl = GutenbergMirror.coverUrl(book.id)
+        if (url.isNullOrBlank()) return
+
+        image.postDelayed(
+            {
+                if (!image.isAttachedToWindow || !isActuallyVisible()) return@postDelayed
+                image.load(url) {
+                    crossfade(false)
+                    placeholder(R.drawable.icon)
+                    error(R.drawable.icon)
+                    size(Size(tileSize, tileSize))
+                    scale(Scale.FILL)
+                    memoryCachePolicy(CachePolicy.ENABLED)
+                    diskCachePolicy(CachePolicy.ENABLED)
+                    networkCachePolicy(CachePolicy.ENABLED)
+                    listener(
+                        onError = { _, _ ->
+                            if (url != fallbackUrl && image.isAttachedToWindow && isActuallyVisible()) {
+                                image.load(fallbackUrl) {
+                                    crossfade(false)
+                                    placeholder(R.drawable.icon)
+                                    error(R.drawable.icon)
+                                    size(Size(tileSize, tileSize))
+                                    scale(Scale.FILL)
+                                    memoryCachePolicy(CachePolicy.ENABLED)
+                                    diskCachePolicy(CachePolicy.ENABLED)
+                                    networkCachePolicy(CachePolicy.ENABLED)
+                                }
+                            }
+                        }
+                    )
+                }
+            },
+            delayMs
+        )
     }
 
     private fun stopAnimation() {

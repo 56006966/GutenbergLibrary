@@ -81,6 +81,17 @@ class LibraryViewModel(
         }
     }
 
+    fun toggleSaveForLater(book: BookEntity) {
+        viewModelScope.launch {
+            val nextStatus = if (book.status == BookEntity.STATUS_TO_READ) {
+                BookEntity.STATUS_LIBRARY
+            } else {
+                BookEntity.STATUS_TO_READ
+            }
+            repository.updateStatus(book.id, nextStatus)
+        }
+    }
+
     private fun refreshPopularBooks() {
         viewModelScope.launch {
             if (shelfCache.hasPopularBooks() && shelfCache.isPopularCacheFresh(CACHE_MAX_AGE_MS)) {

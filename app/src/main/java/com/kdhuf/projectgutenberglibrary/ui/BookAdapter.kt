@@ -45,6 +45,7 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
 
     var onBookClick: ((BookEntity) -> Unit)? = null
     var onFavoriteClick: ((BookEntity) -> Unit)? = null
+    var onSaveForLaterClick: ((BookEntity) -> Unit)? = null
     var onRemoveClick: ((BookEntity) -> Unit)? = null
     private var darkModeEnabled = false
     private var libraryActionsEnabled = false
@@ -289,8 +290,24 @@ class BookAdapter : ListAdapter<BookEntity, BookAdapter.BookViewHolder>(BookDiff
                     else if (darkModeEnabled) ReaderUiPalette.DARK_TEXT else ReaderUiPalette.LIGHT_TEXT
                 )
             )
+            binding.saveForLaterButton.setColorFilter(
+                Color.parseColor(
+                    if (book.status == BookEntity.STATUS_TO_READ) "#7FC8A9"
+                    else if (darkModeEnabled) ReaderUiPalette.DARK_TEXT else ReaderUiPalette.LIGHT_TEXT
+                )
+            )
+            binding.saveForLaterButton.contentDescription = binding.root.context.getString(
+                if (book.status == BookEntity.STATUS_TO_READ) {
+                    R.string.remove_from_save_for_later
+                } else {
+                    R.string.save_for_later
+                }
+            )
             binding.favoriteButton.setOnClickListener {
                 onFavoriteClick?.invoke(book)
+            }
+            binding.saveForLaterButton.setOnClickListener {
+                onSaveForLaterClick?.invoke(book)
             }
             binding.removeButton.setOnClickListener {
                 onRemoveClick?.invoke(book)

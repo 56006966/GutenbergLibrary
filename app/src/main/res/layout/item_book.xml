@@ -187,6 +187,16 @@
                     android:src="@android:drawable/btn_star_big_off" />
 
                 <ImageButton
+                    android:id="@+id/saveForLaterButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_horizontal|top"
+                    android:background="#70000000"
+                    android:contentDescription="@string/save_for_later"
+                    android:padding="4dp"
+                    android:src="@android:drawable/ic_menu_save" />
+
+                <ImageButton
                     android:id="@+id/removeButton"
                     android:layout_width="32dp"
                     android:layout_height="32dp"

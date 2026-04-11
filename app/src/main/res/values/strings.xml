@@ -45,6 +45,8 @@
     <string name="back_to_library">Back</string>
     <string name="contents">Contents</string>
     <string name="favorite_book">Favorite book</string>
+    <string name="save_for_later">Save for later</string>
+    <string name="remove_from_save_for_later">Remove from save for later</string>
     <string name="remove_book">Remove book</string>
     <string name="open_navigation">Open navigation</string>
     <string name="quick_search">Quick Search</string>
@@ -87,6 +89,7 @@
     <string name="open_official_page">Open Official Page</string>
     <string name="library_filter_all">All Books</string>
     <string name="library_filter_favorites">Favorites</string>
+    <string name="library_filter_save_for_later">Saved for Later</string>
     <string name="library_filter_downloaded_newest">Downloaded: Newest</string>
     <string name="library_filter_downloaded_oldest">Downloaded: Oldest</string>
     <string name="library_filter_genre_prefix">Genre: %1$s</string>

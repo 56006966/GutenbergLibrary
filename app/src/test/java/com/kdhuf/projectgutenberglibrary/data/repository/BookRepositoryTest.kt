@@ -9,6 +9,7 @@ import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergMirror
 import com.kdhuf.projectgutenberglibrary.data.remote.GutenbergResponse
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -133,12 +134,53 @@ class BookRepositoryTest {
         assertEquals(GutenbergMirror.coverUrl(84), mapped.coverUrl)
     }
 
+    @Test
+    fun `getLibraryBooks includes regular library and saved for later books`() = runTest {
+        val dao = TrackingBookDao()
+        val repository = BookRepository(
+            dao = dao,
+            catalogDataSource = catalogDataSource
+        )
+
+        repository.getLibraryBooks().first()
+
+        assertEquals(
+            listOf(BookEntity.STATUS_LIBRARY, BookEntity.STATUS_TO_READ),
+            dao.lastRequestedStatuses
+        )
+    }
+
     private class FakeBookDao : BookDao {
         override suspend fun getBookById(id: Int): BookEntity? = null
         override fun getPopularBooks(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun getNewestReleases(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun getAllBooks(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun getBooksByStatus(status: String): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun getBooksByStatuses(statuses: List<String>): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun sortByTitle(): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun sortByDownloads(): Flow<List<BookEntity>> = flowOf(emptyList())
+        override suspend fun updateStatus(id: Int, status: String) = Unit
+        override suspend fun updateLastPageIndex(id: Int, pageIndex: Int) = Unit
+        override suspend fun updateFavorite(id: Int, isFavorite: Boolean) = Unit
+        override suspend fun deleteBookById(id: Int) = Unit
+        override suspend fun getBookCount(): Int = 0
+        override suspend fun insert(book: BookEntity) = Unit
+        override suspend fun insertAll(books: List<BookEntity>) = Unit
+        override fun getAllBooksFlow(): Flow<List<BookEntity>> = flowOf(emptyList())
+    }
+
+    private class TrackingBookDao : BookDao {
+        var lastRequestedStatuses: List<String>? = null
+
+        override suspend fun getBookById(id: Int): BookEntity? = null
+        override fun getPopularBooks(): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun getNewestReleases(): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun getAllBooks(): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun getBooksByStatus(status: String): Flow<List<BookEntity>> = flowOf(emptyList())
+        override fun getBooksByStatuses(statuses: List<String>): Flow<List<BookEntity>> {
+            lastRequestedStatuses = statuses
+            return flowOf(emptyList())
+        }
         override fun sortByTitle(): Flow<List<BookEntity>> = flowOf(emptyList())
         override fun sortByDownloads(): Flow<List<BookEntity>> = flowOf(emptyList())
         override suspend fun updateStatus(id: Int, status: String) = Unit

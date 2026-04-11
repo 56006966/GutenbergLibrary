@@ -25,6 +25,9 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE status = :status ORDER BY title ASC")
     fun getBooksByStatus(status: String): Flow<List<BookEntity>>
 
+    @Query("SELECT * FROM books WHERE status IN (:statuses) ORDER BY title ASC")
+    fun getBooksByStatuses(statuses: List<String>): Flow<List<BookEntity>>
+
     @Query("SELECT * FROM books ORDER BY title ASC")
     fun sortByTitle(): Flow<List<BookEntity>>
 
